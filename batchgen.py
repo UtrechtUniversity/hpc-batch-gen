@@ -11,6 +11,8 @@ import os
 import pathlib
 from string import Template
 from idlelib import rstrip
+import arch.parallel as parallel
+import arch.slurm_lisa as slurm_lisa
 
 
 def _params(file=None):
@@ -131,7 +133,7 @@ def _write_batch_scripts(script_lines, param, output_dir):
             f.write(recursive_template.safe_substitute(param))
     
 
-def generate_batch_scripts(input_script, run_pre_file, run_post_file, output_dir=None):
+def generate_batch_scripts(input_script, run_pre_file, run_post_file, cfg_file_full, output_dir=None):
     '''Function to prepare for writing batch scripts.
     
     Arguments
@@ -146,7 +148,7 @@ def generate_batch_scripts(input_script, run_pre_file, run_post_file, output_dir
         Output directory for batch jobs.
     
     '''
-    script_dir = os.path.dirname(os.path.realpath(__file__))
+#     script_dir = os.path.dirname(os.path.realpath(__file__))
     
     script_lines = _read_script(input_script)
     run_pre_compute = _read_script(run_pre_file)
@@ -154,18 +156,23 @@ def generate_batch_scripts(input_script, run_pre_file, run_post_file, output_dir
     
     run_pre_compute  = "\n".join(run_pre_compute)
     run_post_compute = "\n".join(run_post_compute)
-    param=_params(os.path.join(script_dir, "slurm.cfg"))
+    cfg_file = os.path.basename(cfg_file_full)
+    par_method = os.path.splitext(cfg_file)[0]
+    param=_params(cfg_file_full)
     param['run_pre_compute']  = run_pre_compute
     param['run_post_compute'] = run_post_compute
     
     #If no output directory is given, create one under script directory/batch/${job_name}.
     if output_dir == None:
-        base_dir = script_dir
-        output_dir = os.path.join(base_dir, "batch", param['job_name'])
+#         base_dir = script_dir
+        output_dir = os.path.join("batch."+par_method, param['job_name'])
     
-    _write_batch_scripts(script_lines, param, output_dir)
+    if cfg_file == "slurm_lisa.cfg":
+        slurm_lisa.write_batch_scripts(script_lines, param, output_dir)
+    elif cfg_file == "parallel.cfg":
+        parallel.write_batch_scripts(script_lines, param, output_dir)
     #Bash command to submit the scripts.
-    print(f"for FILE in {output_dir}/batch*.sh; do sbatch $FILE; done")
+
 
 #If used from the command line.
 if __name__ == '__main__':

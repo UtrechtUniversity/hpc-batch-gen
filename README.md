@@ -45,5 +45,7 @@ There should be a directory called "batch/asr_sim" in which batch scripts are pr
 The output of the python script is a bash command to submit all the batch scripts:
 
 ```bash
-for FILE in $BASE_DIR/batch/asr_sim/batch*.sh; do sbatch $FILE; done
+for FILE in $BASE_DIR/batch/asr_sim/batch*.sh; do 
+	sbatch $FILE; 
+done
 ```
