@@ -46,6 +46,7 @@ def _get_body(script_lines):
     str:
         Joined commands.
     '''
+    #Stage the commands every 1 second.
     body=""
     for line in script_lines:
         new_line = line.rstrip() + " &> /dev/null &\n"
@@ -72,19 +73,23 @@ def write_batch_scripts(script_lines, param, output_dir):
     
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
     
+    #If the number of cores is not supplied, set it to the default 16.
     if 'num_cores' in param:
         num_cores=int(param['num_cores'])
     else:
         num_cores=16
-
+    
+    #Split the commands in len(script_lines)/num_cores batches (rounded up).
     for batch_id,i in enumerate(range(0,len(script_lines),num_cores)):
+        #Output file
         file = os.path.join(output_dir, "batch" + str(batch_id) + ".sh")
         param['main_body']=_get_body(script_lines[i:i+num_cores])
         param['batch_id']=batch_id
         if len(script_lines[i:i+num_cores]) < num_cores:
             param['num_cores']=len(script_lines[i:i+num_cores])
+        #Allow for one more substitution to facilitate user defined substitution.
         recursive_template = Template(batch_template.safe_substitute(param))
         with open(file, "w") as f:
             f.write(recursive_template.safe_substitute(param))
-    print(f"for FILE in {output_dir}/batch*.sh; do sbatch $FILE; done")
+    return f"for FILE in {output_dir}/batch*.sh; do sbatch $FILE; done"
 

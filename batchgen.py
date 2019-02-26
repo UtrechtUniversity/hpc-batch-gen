@@ -8,9 +8,6 @@ Script file to generate batch scripts for the SARA/Lisa SLURM system.
 
 import sys
 import os
-import pathlib
-from string import Template
-from idlelib import rstrip
 import arch.parallel as parallel
 import arch.slurm_lisa as slurm_lisa
 
@@ -24,8 +21,7 @@ def _params(file=None):
         Dictionary of all parameters.
     '''
     
-    defaults = {'clock_wall_time':"01:00:00", "num_cores":16,
-                'job_name':'asr_simulation', 
+    defaults = {'clock_wall_time':"01:00:00", 'job_name':'asr_simulation', 
                 "batch_id":0, 'run_pre_compute':"", 'run_post_compute':""}
     
     #If a file is supplied, read the configuration.
@@ -35,53 +31,6 @@ def _params(file=None):
                 (key, val) = line.split()
                 defaults[key]=val
     return defaults
-
-def _batch_template():
-    '''Function that generates the default template.
-    
-    Returns
-    -------
-    string.Template:
-        Template for batch files on Lisa.
-    '''
-    t = Template("""
-#!/bin/bash
-#SBATCH -t ${clock_wall_time}
-#SBATCH --tasks-per-node=${num_cores}
-#SBATCH -J ${job_name}
-
-${run_pre_compute}
-
-${main_body}
-
-${run_post_compute}
-
-echo "Job $$SLURM_JOBID ended at `date`" | mail $$USER -s "Job: ${job_name}/${batch_id} ($$SLURM_JOBID)"
-date    
-""")
-    return t
-
-def _get_body(script_lines):
-    '''Function to create the body of the script files, staging their start.
-    
-    Arguments
-    ---------
-    script_lines: str
-        List of strings where each element is one command to be submitted.
-        
-    Returns
-    -------
-    str:
-        Joined commands.
-    '''
-    body=""
-    for line in script_lines:
-        new_line = line.rstrip() + " &> /dev/null &\n"
-        body = body+new_line
-        body = body+"sleep 1\n"
-    body += "wait\n"
-    body += "wait"
-    return body
 
 
 def _read_script(script):
@@ -103,35 +52,14 @@ def _read_script(script):
         lines = script
     return lines
 
+def print_execution(exec_script):
+    print(f"""
+******************************************************
+** Execute the following on the command line (bash) **
+******************************************************
 
-def _write_batch_scripts(script_lines, param, output_dir):
-    '''Function to write batch scripts to a directory.
-    
-    Arguments
-    ---------
-    script_lines: str
-        List of string where each element is one command.
-    param: dict
-        Dictionary with the parameters for the batch scripts.
-    output_dir: str
-        Directory for batch files.
-    '''
-    batch_template = _batch_template()
-    
-    pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
-    
-    num_cores=int(param['num_cores'])
-
-    for batch_id,i in enumerate(range(0,len(script_lines),num_cores)):
-        file = os.path.join(output_dir, "batch" + str(batch_id) + ".sh")
-        param['main_body']=_get_body(script_lines[i:i+num_cores])
-        param['batch_id']=batch_id
-        if len(script_lines[i:i+num_cores]) < num_cores:
-            param['num_cores']=len(script_lines[i:i+num_cores])
-        with open(file, "w") as f:
-            recursive_template = Template(batch_template.safe_substitute(param))
-            f.write(recursive_template.safe_substitute(param))
-    
+{exec_script}
+""")
 
 def generate_batch_scripts(input_script, run_pre_file, run_post_file, cfg_file_full, output_dir=None):
     '''Function to prepare for writing batch scripts.
@@ -148,31 +76,36 @@ def generate_batch_scripts(input_script, run_pre_file, run_post_file, cfg_file_f
         Output directory for batch jobs.
     
     '''
-#     script_dir = os.path.dirname(os.path.realpath(__file__))
     
+    #Get all the commands either from file, or from lists:
     script_lines = _read_script(input_script)
     run_pre_compute = _read_script(run_pre_file)
     run_post_compute = _read_script(run_post_file)
     
+    #Merge the lists back into single strings
     run_pre_compute  = "\n".join(run_pre_compute)
     run_post_compute = "\n".join(run_post_compute)
+    
+    #Figure out the backend
     cfg_file = os.path.basename(cfg_file_full)
     par_method = os.path.splitext(cfg_file)[0]
     param=_params(cfg_file_full)
     param['run_pre_compute']  = run_pre_compute
     param['run_post_compute'] = run_post_compute
     
-    #If no output directory is given, create one under script directory/batch/${job_name}.
+    #If no output directory is given, create one: batch.${back-end}/${job_name}/.
     if output_dir == None:
-#         base_dir = script_dir
         output_dir = os.path.join("batch."+par_method, param['job_name'])
     
     if cfg_file == "slurm_lisa.cfg":
-        slurm_lisa.write_batch_scripts(script_lines, param, output_dir)
+        exec_script = slurm_lisa.write_batch_scripts(script_lines, param, output_dir)
     elif cfg_file == "parallel.cfg":
-        parallel.write_batch_scripts(script_lines, param, output_dir)
-    #Bash command to submit the scripts.
-
+        exec_script = parallel.write_batch_scripts(script_lines, param, output_dir)
+    else:
+        print(f"Error: no valid backend detected, supplied {cfg_file}")
+        return 1
+    
+    print_execution(exec_script)
 
 #If used from the command line.
 if __name__ == '__main__':

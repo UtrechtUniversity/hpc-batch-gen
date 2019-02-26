@@ -1,9 +1,9 @@
 # batchgen
-Package for generating batch scripts
+Package for generating batch scripts. Currently available: GNU Parallel, SLURM backend.
 
 ## Usage
 ```bash
-python3 batchgen.py input_script run_pre_file run_post_file
+python3 batchgen.py input_script run_pre_file run_post_file config_file
 ```
 
 ##### input_script
@@ -15,8 +15,8 @@ This is code that is run on each of the nodes before the commands. Things like c
 ##### run\_pre\_file
 This code is run on each of the nodes after the commands. Think, copying results back, removing unused data.
 
-##### slurm.cfg
-Simple configuration file for the job to be run. The following options are recommended (but not mandatory) to be set:
+##### config\_file
+Simple configuration file for the job to be run. The name of configuration file should be one of the architectures as given in the arch/ folder (right now _parallel.cfg_ or <i>slurm_lisa.cfg</i>). The following options are recommended (but not mandatory) to be set:
 
 
 <i>clock_wall_timego</i>: Maximum time to run. <br> 
@@ -28,24 +28,22 @@ User defined keys are also possible. For example, one could define the temporary
 
 ## Example
 
-First copy the files in the samples directory to the base directory:
+First go the the working directory:
 
 ```bash
-cp samples/* .
+cd samples
 ```
 
-Then run the asr script:
+Then run the batch generator
 
 ```bash
-python3 asr_batch.py x.csv params.csv
+python ../batchgen.py parallel_cmd.sh /dev/null /dev/null slurm_parallel.cfg 
 ```
 
-There should be a directory called "batch/asr_sim" in which batch scripts are present batch[0-18].sh
+There should be a directory called "batch.parallel/my\_test/" in which a batch script called "batch.sh" is present.
 
-The output of the python script is a bash command to submit all the batch scripts:
+Run the batch script:
 
 ```bash
-for FILE in $BASE_DIR/batch/asr_sim/batch*.sh; do 
-	sbatch $FILE; 
-done
+batch.parallel/my_test/batch.sh
 ```

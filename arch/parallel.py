@@ -44,6 +44,7 @@ def write_batch_scripts(script_lines, param, output_dir):
     '''
     batch_template = _batch_template()
     
+    #If num_cores is not supplied let parallel auto-detect.
     if 'num_cores' in param:
         param['num_cores_w_arg']="-j "+str(param['num_cores'])
     else:
@@ -57,13 +58,17 @@ def write_batch_scripts(script_lines, param, output_dir):
     param['command_file'] = command_file
     recursive_template = Template(batch_template.safe_substitute(param))
     
+    #Write all the commands executed in parallel.
     with open(command_file, "w") as f:
         f.writelines(script_lines)
     
-    
+    #Write the batch script (including pre/post commands that are not in parallel).
     with open(batch_file, "w") as f:
         f.write(recursive_template.safe_substitute(param))
     
+    #make the batch script executable.
     os.chmod(batch_file, 0o755)
-    print(f'{batch_file}')
+    
+    #Bash command to submit the scripts.
+    return f'{batch_file}'
     
