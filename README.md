@@ -1,7 +1,14 @@
 # batchgen
-Package for generating batch scripts. Currently available: GNU Parallel, SLURM backend.
+Package for generating simple batch scripts. Currently available: GNU Parallel, SLURM backend.
 
-## Usage
+### Requirements:
+
+##### Software
+
+- GNU Parallel (for parallel backend)
+- Python 3.x
+
+### Usage
 ```bash
 python3 batchgen.py input_script run_pre_file run_post_file config_file
 ```
@@ -10,31 +17,29 @@ python3 batchgen.py input_script run_pre_file run_post_file config_file
 This is a script file that you want to run/parallelize. Every line should be a simple bash command (no backgrounding necessary).
 
 ##### run\_pre\_file
-This is code that is run on each of the nodes before the commands. Things like copying to temporary directories, copying source files.
+This is code that is run on each of the nodes before the commands. Possible uses are: copying files to temporary directories, copying source files. Use /dev/null to supply no commands here.
 
-##### run\_pre\_file
-This code is run on each of the nodes after the commands. Think, copying results back, removing unused data.
+##### run\_post\_file
+This code is run on each of the nodes after the commands. Possible uses are: copying results back or removing unused data. Use /dev/null to supply no commands here.
 
 ##### config\_file
 Simple configuration file for the job to be run. The name of configuration file should be one of the architectures as given in the arch/ folder (right now _parallel.cfg_ or <i>slurm_lisa.cfg</i>). The following options are recommended (but not mandatory) to be set:
 
-
-<i>clock_wall_timego</i>: Maximum time to run. <br> 
-<i>num_cores</i>: Number of cores per node. <br>  
+<i>clock_wall_time</i>: Maximum time to run. <br> 
+<i>num_cores</i>: Number of cores per node/CPU. <br>  
 <i>job_name</i>: Name of the whole job.  <br>
 
+User defined keys are also possible. For example, one could define the temporary directory ${TMP_DIR} in the config file, to swiftly change between different machines.
 
-User defined keys are also possible. For example, one could define the temporary directory ${TMP_DIR} in the config file, so one could more easily change between different machines.
+### Example
 
-## Example
-
-First go the the working directory:
+First go to the samples directory:
 
 ```bash
 cd samples
 ```
 
-Then run the batch generator
+Then run the batch generator with the parallel backend (assuming the parallel software is installed):
 
 ```bash
 python ../batchgen.py parallel_cmd.sh /dev/null /dev/null slurm_parallel.cfg 

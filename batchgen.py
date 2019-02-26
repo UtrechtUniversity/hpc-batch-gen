@@ -8,8 +8,8 @@ Script file to generate batch scripts for the SARA/Lisa SLURM system.
 
 import sys
 import os
-import arch.parallel as parallel
-import arch.slurm_lisa as slurm_lisa
+import backend.parallel as parallel
+import backend.slurm_lisa as slurm_lisa
 
 
 def _params(file=None):
