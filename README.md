@@ -1,5 +1,5 @@
 # batchgen
-Package for generating simple batch scripts. Currently available: GNU Parallel, SLURM backend.
+Package for generating simple batch scripts in HPC environments. Currently available: GNU Parallel, SLURM backend.
 
 ### Requirements:
 
@@ -27,7 +27,7 @@ Simple configuration file for the job to be run. The name of configuration file 
 
 <i>clock_wall_time</i>: Maximum time to run. <br> 
 <i>num_cores</i>: Number of cores per node/CPU. <br>  
-<i>job_name</i>: Name of the whole job.  <br>
+<i>job_name</i>: Name of the whole job. <br>
 
 User defined keys are also possible. For example, one could define the temporary directory ${TMP_DIR} in the config file, to swiftly change between different machines.
 
@@ -42,7 +42,7 @@ cd samples
 Then run the batch generator with the parallel backend (assuming the parallel software is installed):
 
 ```bash
-python ../batchgen.py parallel_cmd.sh /dev/null /dev/null slurm_parallel.cfg 
+python3 ../batchgen.py parallel_cmd.sh /dev/null /dev/null slurm_parallel.cfg 
 ```
 
 There should be a directory called "batch.parallel/my\_test/" in which a batch script called "batch.sh" is present.
