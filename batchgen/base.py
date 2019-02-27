@@ -3,7 +3,7 @@ Created on 20 Feb 2019
 
 @author: Raoul Schram
 
-Script file to generate batch scripts for the SARA/Lisa SLURM system.
+Script file to generate batch scripts with any backend.
 '''
 
 import os

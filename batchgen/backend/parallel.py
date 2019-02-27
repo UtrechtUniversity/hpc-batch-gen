@@ -72,4 +72,3 @@ def write_batch_scripts(script_lines, param, output_dir):
 
     # Bash command to submit the scripts.
     return f'{batch_file}'
-    
