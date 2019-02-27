@@ -8,9 +8,23 @@ Package for generating simple batch scripts in HPC environments. Currently avail
 - GNU Parallel (for parallel backend)
 - Python 3.x
 
+### Installation:
+
+The easiest way to install the batchgen package is to use the following command in a terminal:
+
+``` bash
+pip install git+https://github.com/UtrechtUniversity/hpc-batch-gen.git
+```
+
+Use the following in case you have no administrator access:
+
+``` bash
+pip install --user git+https://github.com/UtrechtUniversity/hpc-batch-gen.git
+```
+
 ### Usage
 ```bash
-python3 batchgen.py input_script run_pre_file run_post_file config_file
+python3 -m batchgen input_script run_pre_file run_post_file config_file
 ```
 
 ##### input_script
@@ -42,7 +56,7 @@ cd samples
 Then run the batch generator with the parallel backend (assuming the parallel software is installed):
 
 ```bash
-python3 ../batchgen.py parallel_cmd.sh /dev/null /dev/null slurm_parallel.cfg 
+python3 asr_batch.py x.csv params.csv parallel.cfg
 ```
 
 There should be a directory called "batch.parallel/my\_test/" in which a batch script called "batch.sh" is present.
@@ -52,3 +66,4 @@ Run the batch script:
 ```bash
 batch.parallel/my_test/batch.sh
 ```
+

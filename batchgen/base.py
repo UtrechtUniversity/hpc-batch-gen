@@ -113,10 +113,3 @@ def generate_batch_scripts(input_script, run_pre_file, run_post_file,
 
     print_execution(exec_script)
 
-
-# If used from the command line.
-if __name__ == '__main__':
-    if len(sys.argv) <= 3:
-        print("Error: need three arguments (script file)")
-    else:
-        generate_batch_scripts(*sys.argv[1:])

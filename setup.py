@@ -58,7 +58,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'batchgen=batchgen.batchgen:generate_batch_files'],
+            'batchgen=batchgen.__main__:main'],
 
     },
 
