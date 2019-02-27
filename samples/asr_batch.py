@@ -10,7 +10,7 @@ import sys
 
 import pandas as pd
 
-from batchgen import generate_batch_scripts
+from batchgen.base import generate_batch_scripts
 
 
 def pre_compute_defaults():
