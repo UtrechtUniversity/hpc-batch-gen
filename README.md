@@ -37,13 +37,27 @@ This is code that is run on each of the nodes before the commands. Possible uses
 This code is run on each of the nodes after the commands. Possible uses are: copying results back or removing unused data. Use /dev/null to supply no commands here.
 
 ##### config\_file
-Simple configuration file for the job to be run. The name of configuration file should be one of the architectures as given in the arch/ folder (right now _parallel.cfg_ or <i>slurm_lisa.cfg</i>). The following options are recommended (but not mandatory) to be set:
+Simple configuration file for the job to be run in standard INI format. There should be two sections: BACKEND (specifying the backend to run on such as parallel/slurm), and BATCH_OPTION (specifying options for the generated batch).
 
-<i>clock_wall_time</i>: Maximum time to run. <br> 
-<i>num_cores</i>: Number of cores per node/CPU. <br>  
-<i>job_name</i>: Name of the whole job. <br>
+The following is an example for the configuration file:
 
-User defined keys are also possible. For example, one could define the temporary directory ${TMP_DIR} in the config file, to swiftly change between different machines.
+```ini
+[BACKEND]
+# Use SLURM backend on hpc cluster Lisa at SURFSara.
+backend = slurm_lisa
+
+[BATCH_OPTIONS]
+# Set maximum running time in hh:mm:ss.
+clock_wall_time = 02:00:00
+
+# Set number of cores per node.
+num_cores = 16
+
+# Set job name.
+job_name = asr_sim
+```
+
+User defined keys under the BATCH\_OPTIONS section are possible. For example, one could define the temporary directory ${TMP_DIR} in the config file, to swiftly change between different machines.
 
 ### Example
 
@@ -66,4 +80,5 @@ Run the batch script:
 ```bash
 batch.parallel/my_test/batch.sh
 ```
+
 

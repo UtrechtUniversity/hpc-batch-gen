@@ -6,13 +6,14 @@ Created on 20 Feb 2019
 Script file to generate batch scripts for the SARA/Lisa SLURM system.
 '''
 
-import sys
 import os
+import configparser
+
 import batchgen.backend.parallel as parallel
 import batchgen.backend.slurm_lisa as slurm_lisa
 
 
-def _params(file=None):
+def _params(config=None):
     '''Function to set defaults for the batch jobs.
 
     Returns
@@ -21,16 +22,19 @@ def _params(file=None):
         Dictionary of all parameters.
     '''
 
-    defaults = {'clock_wall_time': "01:00:00", 'job_name': 'asr_simulation',
-                "batch_id": 0, 'run_pre_compute': "", 'run_post_compute': ""}
+    parameters = {'clock_wall_time': "01:00:00", 'job_name': 'asr_simulation',
+                  "batch_id": 0, 'run_pre_compute': "", 'run_post_compute': ""}
 
     # If a file is supplied, read the configuration.
-    if file is not None:
-        with open(file, "r") as f:
-            for line in f:
-                (key, val) = line.split()
-                defaults[key] = val
-    return defaults
+    if config is not None:
+        for option in config["BATCH_OPTIONS"]:
+            parameters[option] = config["BATCH_OPTIONS"][option]
+#     sys.exit()
+#         with open(file, "r") as f:
+#             for line in f:
+#                 (key, val) = line.split()
+#                 defaults[key] = val
+    return parameters
 
 
 def _read_script(script):
@@ -64,7 +68,7 @@ def print_execution(exec_script):
 
 
 def generate_batch_scripts(input_script, run_pre_file, run_post_file,
-                           cfg_file_full, output_dir=None):
+                           cfg_file, output_dir=None):
     '''Function to prepare for writing batch scripts.
 
     Arguments
@@ -85,25 +89,28 @@ def generate_batch_scripts(input_script, run_pre_file, run_post_file,
     run_pre_compute = _read_script(run_pre_file)
     run_post_compute = _read_script(run_post_file)
 
-    # Merge the lists back into single strings
+    # Merge the lists back into single strings.
     run_pre_compute = "\n".join(run_pre_compute)
     run_post_compute = "\n".join(run_post_compute)
 
     # Figure out the backend
-    cfg_file = os.path.basename(cfg_file_full)
-    par_method = os.path.splitext(cfg_file)[0]
-    param = _params(cfg_file_full)
+    config = configparser.ConfigParser()
+    config.read(cfg_file)
+    backend = config['BACKEND']['backend']
+
+    # Set the parameters from the config file.
+    param = _params(config)
     param['run_pre_compute'] = run_pre_compute
     param['run_post_compute'] = run_post_compute
 
     # If no output directory is given, create batch.${back-end}/${job_name}/.
     if output_dir is None:
-        output_dir = os.path.join("batch."+par_method, param['job_name'])
+        output_dir = os.path.join("batch."+backend, param['job_name'])
 
-    if cfg_file == "slurm_lisa.cfg":
+    if backend == "slurm_lisa":
         exec_script = slurm_lisa.write_batch_scripts(script_lines, param,
                                                      output_dir)
-    elif cfg_file == "parallel.cfg":
+    elif backend == "parallel":
         exec_script = parallel.write_batch_scripts(script_lines, param,
                                                    output_dir)
 
@@ -112,4 +119,3 @@ def generate_batch_scripts(input_script, run_pre_file, run_post_file,
         return 1
 
     print_execution(exec_script)
-
