@@ -13,7 +13,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 # Extract version from cbsodata.py
-for line in open(path.join(".", "__init__.py")):
+for line in open(path.join("batchgen", "__init__.py")):
     if line.startswith('__version__'):
         exec(line)
         break

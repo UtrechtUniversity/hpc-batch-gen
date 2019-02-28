@@ -71,8 +71,8 @@ def generate_shell_script(file_data, file_params, config_file):
         execute += " " + file_data
         script.append(execute + "\n")
 
-    generate_batch_scripts(script, pre_compute_defaults(),
-                           post_compute_defaults(), config_file)
+    generate_batch_scripts(script, config_file, pre_compute_defaults(),
+                           post_compute_defaults())
 
 
 # If used from the command line.

@@ -67,8 +67,8 @@ def print_execution(exec_script):
 """.format(exec_script=exec_script))
 
 
-def generate_batch_scripts(input_script, run_pre_file, run_post_file,
-                           cfg_file, output_dir=None):
+def generate_batch_scripts(command_file, config_file, run_pre_file,
+                           run_post_file, output_dir=None):
     '''Function to prepare for writing batch scripts.
 
     Arguments
@@ -85,7 +85,7 @@ def generate_batch_scripts(input_script, run_pre_file, run_post_file,
     '''
 
     # Get all the commands either from file, or from lists:
-    script_lines = _read_script(input_script)
+    script_lines = _read_script(command_file)
     run_pre_compute = _read_script(run_pre_file)
     run_post_compute = _read_script(run_post_file)
 
@@ -95,7 +95,7 @@ def generate_batch_scripts(input_script, run_pre_file, run_post_file,
 
     # Figure out the backend
     config = configparser.ConfigParser()
-    config.read(cfg_file)
+    config.read(config_file)
     backend = config['BACKEND']['backend']
 
     # Set the parameters from the config file.
@@ -116,7 +116,7 @@ def generate_batch_scripts(input_script, run_pre_file, run_post_file,
 
     else:
         print("Error: no valid backend detected, supplied {cfg_file}".format(
-               cfg_file=cfg_file))
+               cfg_file=config_file))
         return 1
 
     print_execution(exec_script)
