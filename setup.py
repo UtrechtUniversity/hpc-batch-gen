@@ -37,7 +37,9 @@ setup(
         # Pick your license as you wish
         'License :: OSI Approved :: MIT License',
 
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
@@ -46,6 +48,8 @@ setup(
     packages=find_packages(exclude=['samples']),
 
     install_requires=[
+        "configparser",
+        "pathlib2",
     ],
 
     extras_require={

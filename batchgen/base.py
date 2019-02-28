@@ -58,13 +58,13 @@ def _read_script(script):
 
 
 def print_execution(exec_script):
-    print(f"""
+    print("""
 ******************************************************
 ** Execute the following on the command line (bash) **
 ******************************************************
 
 {exec_script}
-""")
+""".format(exec_script=exec_script))
 
 
 def generate_batch_scripts(input_script, run_pre_file, run_post_file,
@@ -115,7 +115,8 @@ def generate_batch_scripts(input_script, run_pre_file, run_post_file,
                                                    output_dir)
 
     else:
-        print(f"Error: no valid backend detected, supplied {cfg_file}")
+        print("Error: no valid backend detected, supplied {cfg_file}".format(
+               cfg_file=cfg_file))
         return 1
 
     print_execution(exec_script)

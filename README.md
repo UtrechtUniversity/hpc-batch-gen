@@ -70,7 +70,7 @@ cd samples
 Then run the batch generator with the parallel backend (assuming the parallel software is installed):
 
 ```bash
-python3 asr_batch.py x.csv params.csv parallel.cfg
+python3 asr_batch.py x.csv params.csv parallel.ini
 ```
 
 There should be a directory called "batch.parallel/my\_test/" in which a batch script called "batch.sh" is present.

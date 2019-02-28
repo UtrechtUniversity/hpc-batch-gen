@@ -4,9 +4,10 @@ Created on 26 Feb 2019
 @author: qubix
 '''
 
-import pathlib
 import os
 from string import Template
+
+import pathlib2
 
 
 def _batch_template():
@@ -74,7 +75,7 @@ def write_batch_scripts(script_lines, param, output_dir):
     '''
     batch_template = _batch_template()
 
-    pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+    pathlib2.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     # If the number of cores is not supplied, set it to the default 16.
     if 'num_cores' in param:
@@ -85,13 +86,15 @@ def write_batch_scripts(script_lines, param, output_dir):
     # Split the commands in len(script_lines)/num_cores batches (rounded up).
     for batch_id, i in enumerate(range(0, len(script_lines), num_cores)):
         # Output file
-        file = os.path.join(output_dir, "batch" + str(batch_id) + ".sh")
+        output_file = os.path.join(output_dir, "batch" + str(batch_id) + ".sh")
         param['main_body'] = _get_body(script_lines[i:i + num_cores])
         param['batch_id'] = batch_id
         if len(script_lines[i:i+num_cores]) < num_cores:
             param['num_cores'] = len(script_lines[i:i + num_cores])
         # Allow for one more substitution to facilitate user substitution.
         recursive_template = Template(batch_template.safe_substitute(param))
-        with open(file, "w") as f:
+        with open(output_file, "w") as f:
             f.write(recursive_template.safe_substitute(param))
-    return f"for FILE in {output_dir}/batch*.sh; do sbatch $FILE; done"
+    my_exec = "for FILE in {output_dir}/batch*.sh; do sbatch $FILE; done"
+
+    return my_exec.format(output_dir=output_dir)

@@ -6,8 +6,9 @@ Example script file to generate batch scripts.
 '''
 
 import os
-import pathlib
 from string import Template
+
+import pathlib2
 
 
 def _batch_template():
@@ -51,7 +52,7 @@ def write_batch_scripts(script_lines, param, output_dir):
     else:
         param['num_cores_w_arg'] = ""
 
-    pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+    pathlib2.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     command_file = os.path.join(output_dir, "commands.sh")
     batch_file = os.path.join(output_dir, "batch.sh")
@@ -71,4 +72,4 @@ def write_batch_scripts(script_lines, param, output_dir):
     os.chmod(batch_file, 0o755)
 
     # Bash command to submit the scripts.
-    return f'{batch_file}'
+    return batch_file
