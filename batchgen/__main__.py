@@ -49,6 +49,15 @@ def main():
         help="Commands to be executed for all nodes after command execution",
     )
 
+    parser.add_argument(
+        "-f", "--force-overwrite",
+        dest="force_clear",
+        action="store_const",
+        const=True,
+        default=False,
+        help="When batch directory exists, clear contents [USE WITH CARE]",
+    )
+
     # Version
     parser.add_argument(
         "-v", "--version",

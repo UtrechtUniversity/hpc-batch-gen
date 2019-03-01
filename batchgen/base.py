@@ -53,7 +53,7 @@ def _read_script(script):
 
 
 def generate_batch_scripts(command_file, config_file, run_pre_file,
-                           run_post_file, output_dir=None):
+                           run_post_file, force_clear=False):
     """Function to prepare for writing batch scripts.
 
     Arguments
@@ -89,8 +89,8 @@ def generate_batch_scripts(command_file, config_file, run_pre_file,
     param["run_post_compute"] = run_post_compute
 
     # If no output directory is given, create batch.${back-end}/${job_name}/.
-    if output_dir is None:
-        output_dir = os.path.join("batch."+backend, param["job_name"])
+#     if output_dir is None:
+    output_dir = os.path.join("batch."+backend, param["job_name"])
 
     if backend == "slurm_lisa":
         batch = SlurmLisa()
@@ -101,4 +101,4 @@ def generate_batch_scripts(command_file, config_file, run_pre_file,
                cfg_file=config_file))
         return 1
 
-    batch.write_batch(script_lines, param, output_dir)
+    batch.write_batch(script_lines, param, output_dir, force_clear)
