@@ -7,34 +7,7 @@ SLURM on Lisa (SURFSara) backend for running batch style scripts.
 import os
 from string import Template
 
-import pathlib2
-
-
-def _batch_template():
-    """Function that generates the default template.
-
-    Returns
-    -------
-    string.Template:
-        Template for batch files on Lisa.
-    """
-    t = Template("""
-#!/bin/bash
-#SBATCH -t ${clock_wall_time}
-#SBATCH --tasks-per-node=${num_cores}
-#SBATCH -J ${job_name}
-
-${run_pre_compute}
-
-${main_body}
-
-${run_post_compute}
-
-echo "Job $$SLURM_JOBID ended at `date`" | mail $$USER -s \
-"Job: ${job_name}/${batch_id} ($$SLURM_JOBID)"
-date
-""")
-    return t
+from batchgen.backend.hpc import HPC, double_substitute
 
 
 def _get_body(script_lines):
@@ -62,43 +35,62 @@ def _get_body(script_lines):
     return body
 
 
-def write_batch_scripts(script_lines, param, output_dir):
-    """Function to write batch scripts to a directory.
+class SlurmLisa(HPC):
+    """ Derived class from HPC. See hpc.py for method descriptions """
 
-    Arguments
-    ---------
-    script_lines: str
-        List of string where each element is one command.
-    param: dict
-        Dictionary with the parameters for the batch scripts.
-    output_dir: str
-        Directory for batch files.
-    """
+    def _create_batch_template(self):
+        t = Template("""
+#!/bin/bash
+#SBATCH -t ${clock_wall_time}
+#SBATCH --tasks-per-node=${num_cores}
+#SBATCH -J ${job_name}
 
-    batch_template = _batch_template()
+${run_pre_compute}
 
-    pathlib2.Path(output_dir).mkdir(parents=True, exist_ok=True)
+${main_body}
 
-    # If the number of cores is not supplied, set it to the default 16.
-    if "num_cores" in param:
-        num_cores = int(param["num_cores"])
-    else:
-        num_cores = 16
+${run_post_compute}
 
-    # Split the commands in len(script_lines)/num_cores batches (rounded up).
-    for batch_id, i in enumerate(range(0, len(script_lines), num_cores)):
-        # Output file
-        output_file = os.path.join(output_dir, "batch" + str(batch_id) + ".sh")
-        param["main_body"] = _get_body(script_lines[i:i + num_cores])
-        param["batch_id"] = batch_id
-        if len(script_lines[i:i+num_cores]) < num_cores:
-            param["num_cores"] = len(script_lines[i:i + num_cores])
-        # Allow for one more substitution to facilitate user substitution.
-        recursive_template = Template(batch_template.safe_substitute(param))
-        with open(output_file, "w") as f:
-            f.write(recursive_template.safe_substitute(param))
+echo "Job $$SLURM_JOBID ended at `date`" | mail $$USER -s \
+"Job: ${job_name}/${batch_id} ($$SLURM_JOBID)"
+date
+""")
+        return t
 
-    # Execute the following to submit the batch.
-    my_exec = "for FILE in {output_dir}/batch*.sh; do sbatch $FILE; done"
+    def _parse_params(self, param, script_lines, output_dir):
 
-    return my_exec.format(output_dir=output_dir)
+        # If the number of cores is not supplied, set it to the default 16.
+        if "num_cores" in param:
+            num_cores = int(param["num_cores"])
+        else:
+            num_cores = 16
+
+        param["script_lines"] = script_lines
+        param["output_dir"] = output_dir
+        param["num_cores"] = num_cores
+        return param
+
+    def _write_batch_files(self):
+        par = self._params
+        script_lines = par["script_lines"]
+        num_cores = par["num_cores"]
+        output_dir = par["output_dir"]
+        # Split the commands in batches.
+        for batch_id, i in enumerate(range(0, len(script_lines), num_cores)):
+            # Output file
+            output_file = os.path.join(output_dir,
+                                       "batch" + str(batch_id) + ".sh")
+            par["main_body"] = _get_body(script_lines[i:i + num_cores])
+            par["batch_id"] = batch_id
+            if len(script_lines[i:i+num_cores]) < num_cores:
+                par["num_cores"] = len(script_lines[i:i + num_cores])
+
+            # Allow for one more substitution to facilitate user substitution.
+            batch_script = double_substitute(self._batch_template, par)
+            with open(output_file, "w") as f:
+                f.write(batch_script)
+
+        # Execute the following to submit the batch.
+        my_exec = "for FILE in {output_dir}/batch*.sh; do sbatch $FILE; done"
+
+        return my_exec.format(output_dir=output_dir)

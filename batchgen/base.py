@@ -8,8 +8,8 @@ See __main__ for the Command Line Interface (CLI)
 import os
 import configparser
 
-import batchgen.backend.parallel as parallel
-import batchgen.backend.slurm_lisa as slurm_lisa
+from batchgen.backend.parallel import Parallel
+from batchgen.backend.slurm_lisa import SlurmLisa
 
 
 def _params(config=None):
@@ -50,16 +50,6 @@ def _read_script(script):
     else:
         lines = script
     return lines
-
-
-def print_execution(exec_script):
-    print("""
-******************************************************
-** Execute the following on the command line (bash) **
-******************************************************
-
-{exec_script}
-""".format(exec_script=exec_script))
 
 
 def generate_batch_scripts(command_file, config_file, run_pre_file,
@@ -103,16 +93,12 @@ def generate_batch_scripts(command_file, config_file, run_pre_file,
         output_dir = os.path.join("batch."+backend, param["job_name"])
 
     if backend == "slurm_lisa":
-        exec_script = slurm_lisa.write_batch_scripts(
-            script_lines, param, output_dir)
-
+        batch = SlurmLisa()
     elif backend == "parallel":
-        exec_script = parallel.write_batch_scripts(
-            script_lines, param, output_dir)
-
+        batch = Parallel()
     else:
         print("Error: no valid backend detected, supplied {cfg_file}".format(
                cfg_file=config_file))
         return 1
 
-    print_execution(exec_script)
+    batch.write_batch(script_lines, param, output_dir)

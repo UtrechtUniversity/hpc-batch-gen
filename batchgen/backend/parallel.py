@@ -7,19 +7,13 @@ GNU Parallel backend for running batch style scripts.
 import os
 from string import Template
 
-import pathlib2
+from batchgen.backend.hpc import HPC, double_substitute
 
 
-def _batch_template():
-    """Function that generates the default template.
-
-    Returns
-    -------
-    string.Template:
-        Template for batch files on Lisa.
-    """
-
-    t = Template("""
+class Parallel(HPC):
+    """ Derived class from HPC. See hpc.py for method descriptions """
+    def _create_batch_template(self):
+        t = Template("""
 #!/bin/bash
 
 ${run_pre_compute}
@@ -29,48 +23,39 @@ parallel ${num_cores_w_arg} < ${command_file}
 ${run_post_compute}
 
 """)
-    return t
+        return t
 
+    def _parse_params(self, param, script_lines, output_dir):
 
-def write_batch_scripts(script_lines, param, output_dir):
-    """Function to write batch scripts to a directory.
+        # If num_cores is not supplied let parallel auto-detect.
+        if "num_cores" in param:
+            param["num_cores_w_arg"] = "-j " + str(param["num_cores"])
+        else:
+            param["num_cores_w_arg"] = ""
 
-    Arguments
-    ---------
-    script_lines: str
-        List of string where each element is one command.
-    param: dict
-        Dictionary with the parameters for the batch scripts.
-    output_dir: str
-        Directory for batch files.
-    """
+        command_file = os.path.join(output_dir, "commands.sh")
+        batch_file = os.path.join(output_dir, "batch.sh")
 
-    batch_template = _batch_template()
+        param["command_file"] = command_file
+        param["script_lines"] = script_lines
+        param["batch_file"] = batch_file
+        return param
 
-    # If num_cores is not supplied let parallel auto-detect.
-    if "num_cores" in param:
-        param["num_cores_w_arg"] = "-j " + str(param["num_cores"])
-    else:
-        param["num_cores_w_arg"] = ""
+    def _write_batch_files(self):
 
-    pathlib2.Path(output_dir).mkdir(parents=True, exist_ok=True)
+        par = self._params
+        batch_str = double_substitute(self._batch_template, par)
+        batch_file = par["batch_file"]
+        # Write all the commands executed in parallel.
+        with open(par["command_file"], "w") as f:
+            f.writelines(par["script_lines"])
 
-    command_file = os.path.join(output_dir, "commands.sh")
-    batch_file = os.path.join(output_dir, "batch.sh")
+        # Write batch script (inc. pre/post commands that are not in parallel).
+        with open(batch_file, "w") as f:
+            f.write(batch_str)
 
-    param["command_file"] = command_file
-    recursive_template = Template(batch_template.safe_substitute(param))
+        # Make the batch script executable.
+        os.chmod(batch_file, 0o755)
 
-    # Write all the commands executed in parallel.
-    with open(command_file, "w") as f:
-        f.writelines(script_lines)
-
-    # Write the batch script (inc. pre/post commands that are not in parallel).
-    with open(batch_file, "w") as f:
-        f.write(recursive_template.safe_substitute(param))
-
-    # Make the batch script executable.
-    os.chmod(batch_file, 0o755)
-
-    # Bash command to submit the scripts.
-    return batch_file
+        # Bash command to submit the scripts.
+        return batch_file
