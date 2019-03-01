@@ -67,7 +67,7 @@ First go to the samples directory:
 cd samples
 ```
 
-Then run the batch generator with the parallel backend (assuming the parallel software is installed):
+Then run the batch generator with the parallel backend (assuming the GNU parallel is installed):
 
 ```bash
 python asr_batch.py x.csv params.csv parallel.ini

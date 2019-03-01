@@ -1,8 +1,8 @@
-'''
-Created on 26 Feb 2019
+"""
+SLURM on Lisa (SURFSara) backend for running batch style scripts.
 
-@author: qubix
-'''
+@author: Raoul Schram
+"""
 
 import os
 from string import Template
@@ -11,13 +11,13 @@ import pathlib2
 
 
 def _batch_template():
-    '''Function that generates the default template.
+    """Function that generates the default template.
 
     Returns
     -------
     string.Template:
         Template for batch files on Lisa.
-    '''
+    """
     t = Template("""
 #!/bin/bash
 #SBATCH -t ${clock_wall_time}
@@ -38,7 +38,7 @@ date
 
 
 def _get_body(script_lines):
-    '''Function to create the body of the script files, staging their start.
+    """Function to create the body of the script files, staging their start.
 
     Arguments
     ---------
@@ -49,7 +49,8 @@ def _get_body(script_lines):
     -------
     str:
         Joined commands.
-    '''
+    """
+
     # Stage the commands every 1 second.
     body = ""
     for line in script_lines:
@@ -62,7 +63,7 @@ def _get_body(script_lines):
 
 
 def write_batch_scripts(script_lines, param, output_dir):
-    '''Function to write batch scripts to a directory.
+    """Function to write batch scripts to a directory.
 
     Arguments
     ---------
@@ -72,14 +73,15 @@ def write_batch_scripts(script_lines, param, output_dir):
         Dictionary with the parameters for the batch scripts.
     output_dir: str
         Directory for batch files.
-    '''
+    """
+
     batch_template = _batch_template()
 
     pathlib2.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     # If the number of cores is not supplied, set it to the default 16.
-    if 'num_cores' in param:
-        num_cores = int(param['num_cores'])
+    if "num_cores" in param:
+        num_cores = int(param["num_cores"])
     else:
         num_cores = 16
 
@@ -87,14 +89,16 @@ def write_batch_scripts(script_lines, param, output_dir):
     for batch_id, i in enumerate(range(0, len(script_lines), num_cores)):
         # Output file
         output_file = os.path.join(output_dir, "batch" + str(batch_id) + ".sh")
-        param['main_body'] = _get_body(script_lines[i:i + num_cores])
-        param['batch_id'] = batch_id
+        param["main_body"] = _get_body(script_lines[i:i + num_cores])
+        param["batch_id"] = batch_id
         if len(script_lines[i:i+num_cores]) < num_cores:
-            param['num_cores'] = len(script_lines[i:i + num_cores])
+            param["num_cores"] = len(script_lines[i:i + num_cores])
         # Allow for one more substitution to facilitate user substitution.
         recursive_template = Template(batch_template.safe_substitute(param))
         with open(output_file, "w") as f:
             f.write(recursive_template.safe_substitute(param))
+
+    # Execute the following to submit the batch.
     my_exec = "for FILE in {output_dir}/batch*.sh; do sbatch $FILE; done"
 
     return my_exec.format(output_dir=output_dir)
