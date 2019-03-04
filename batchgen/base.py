@@ -7,6 +7,7 @@ See __main__ for the Command Line Interface (CLI)
 
 import os
 import configparser
+from string import Template
 
 from batchgen.backend.parallel import Parallel
 from batchgen.backend.slurm_lisa import SlurmLisa
@@ -52,8 +53,8 @@ def _read_script(script):
     return lines
 
 
-def generate_batch_scripts(command_file, config_file, run_pre_file,
-                           run_post_file, force_clear=False):
+def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
+                           run_post_file="/dev/null", force_clear=False):
     """Function to prepare for writing batch scripts.
 
     Arguments
@@ -69,6 +70,25 @@ def generate_batch_scripts(command_file, config_file, run_pre_file,
 
     """
 
+    # Figure out the backend
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    backend = config["BACKEND"]["backend"]
+
+    # Set the parameters from the config file.
+    param = _params(config)
+
+    # Read options for pre/post commands from config file.
+    for pre_post in ["run_pre_file", "run_post_file"]:
+        if pre_post in config["BATCH_OPTIONS"]:
+            pp_file = config["BATCH_OPTIONS"][pre_post]
+            pp_file_sub = Template(pp_file).safe_substitute(param)
+            if pre_post == "run_pre_file":
+                run_pre_file = pp_file_sub
+            else:
+                run_post_file = pp_file_sub
+#             print(pp_file_sub)
+
     # Get all the commands either from file, or from lists:
     script_lines = _read_script(command_file)
     run_pre_compute = _read_script(run_pre_file)
@@ -78,13 +98,6 @@ def generate_batch_scripts(command_file, config_file, run_pre_file,
     run_pre_compute = "\n".join(run_pre_compute)
     run_post_compute = "\n".join(run_post_compute)
 
-    # Figure out the backend
-    config = configparser.ConfigParser()
-    config.read(config_file)
-    backend = config["BACKEND"]["backend"]
-
-    # Set the parameters from the config file.
-    param = _params(config)
     param["run_pre_compute"] = run_pre_compute
     param["run_post_compute"] = run_post_compute
 

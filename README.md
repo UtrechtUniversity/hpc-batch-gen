@@ -81,4 +81,8 @@ Run the batch script:
 batch.parallel/my_test/batch.sh
 ```
 
+### Contributors
+
+- Raoul Schram (r.d.schram@uu.nl, [@qubixes](github.com/qubixes))
+
 

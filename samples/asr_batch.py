@@ -70,14 +70,15 @@ def generate_shell_script(file_data, file_params, config_file):
         execute += " " + file_data
         script.append(execute + "\n")
 
-    generate_batch_scripts(script, config_file, pre_compute_defaults(),
-                           post_compute_defaults())
+    generate_batch_scripts(command_file=script, config_file=config_file,
+                           run_pre_file=pre_compute_defaults(),
+                           run_post_file=post_compute_defaults())
 
 
 # If used from the command line.
 if __name__ == "__main__":
     if len(sys.argv) <= 3:
-        print("Error: need two arguments: simulation file, parameter file,"
+        print("Error: need three arguments: simulation file, parameter file,"
               " config file")
     else:
         generate_shell_script(*sys.argv[1:])
