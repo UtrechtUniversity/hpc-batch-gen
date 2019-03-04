@@ -35,21 +35,47 @@ def _params(config=None):
 
 
 def _replace_rel_abs_path(config, config_file):
+    """ Variables in the config file ending with dir|file
+        are replaced with an absolute file path.
+
+    Arguments
+    ---------
+    config: configparser
+        Configuration read from a .ini file.
+    config_file: str
+        Path to the configuration file (can be relative).
+    """
     config_dir = os.path.dirname(config_file)
     config_dir_abs = os.path.abspath(config_dir)
 
     for key in config["BATCH_OPTIONS"]:
         if re.match(r'.+?_(dir|file)', key):
+            # Create the absolute path from a possible relative path.
             newp = os.path.join(config_dir_abs, config["BATCH_OPTIONS"][key])
             config["BATCH_OPTIONS"][key] = newp
 
 
 def _read_pre_post_file(filename):
+    """ Read the combined pre/post commands file.
+
+    Arguments
+    ---------
+    filename: str
+        Path to pre/post commands file.
+
+    Returns
+    -------
+    str:
+        Pre-commands split up per line.
+    str:
+        Post-commands split up per line.
+    """
     pre_lines = []
     post_lines = []
     cur_lines = pre_lines
     with open(filename, "r") as f:
         for cur_line in f:
+            # Check for switching or pre/post commands.
             if re.match(r"## PRE_COMMANDS ##*", cur_line):
                 cur_lines = pre_lines
             elif re.match(r"## POST_COMMANDS ##*", cur_line):
@@ -60,7 +86,7 @@ def _read_pre_post_file(filename):
 
 
 def _read_script(script):
-    """Function to load either a script file or list.
+    """ Function to load either a script file or list.
 
     Arguments
     ---------
