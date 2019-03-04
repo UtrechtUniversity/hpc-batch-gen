@@ -105,6 +105,15 @@ def _read_script(script):
     return lines
 
 
+def _check_files(*args):
+    n_error = 0
+    for file in args:
+        if not os.path.isfile(file) and file != "/dev/null":
+            print("Error: file {file} does not exist.".format(file=file))
+            n_error += 1
+    return n_error
+
+
 def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
                            run_post_file="/dev/null", force_clear=False):
     """Function to prepare for writing batch scripts.
@@ -121,6 +130,9 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
         Output directory for batch jobs.
 
     """
+    # Make sure all files exist.
+    if _check_files(command_file, config_file, run_pre_file, run_post_file):
+        return 1
 
     # Figure out the backend
     config = cp.ConfigParser(interpolation=cp.ExtendedInterpolation())
