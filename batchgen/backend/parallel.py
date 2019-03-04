@@ -17,11 +17,8 @@ class Parallel(HPC):
 #!/bin/bash
 
 ${run_pre_compute}
-
-parallel ${num_cores_w_arg} < ${command_file}
-
+parallel ${num_cores_w_arg}< ${command_file}
 ${run_post_compute}
-
 """)
         return t
 

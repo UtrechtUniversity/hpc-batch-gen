@@ -6,7 +6,8 @@ See __main__ for the Command Line Interface (CLI)
 """
 
 import os
-import configparser
+import configparser as cp
+import re
 from string import Template
 
 from batchgen.backend.parallel import Parallel
@@ -31,6 +32,31 @@ def _params(config=None):
             parameters[option] = config["BATCH_OPTIONS"][option]
 
     return parameters
+
+
+def _replace_rel_abs_path(config, config_file):
+    config_dir = os.path.dirname(config_file)
+    config_dir_abs = os.path.abspath(config_dir)
+
+    for key in config["BATCH_OPTIONS"]:
+        if re.match(r'.+?_(dir|file)', key):
+            newp = os.path.join(config_dir_abs, config["BATCH_OPTIONS"][key])
+            config["BATCH_OPTIONS"][key] = newp
+
+
+def _read_pre_post_file(filename):
+    pre_lines = []
+    post_lines = []
+    cur_lines = pre_lines
+    with open(filename, "r") as f:
+        for cur_line in f:
+            if re.match(r"## PRE_COMMANDS ##*", cur_line):
+                cur_lines = pre_lines
+            elif re.match(r"## POST_COMMANDS ##*", cur_line):
+                cur_lines = post_lines
+            else:
+                cur_lines.append(cur_line)
+    return (pre_lines, post_lines)
 
 
 def _read_script(script):
@@ -71,8 +97,10 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
     """
 
     # Figure out the backend
-    config = configparser.ConfigParser()
+    config = cp.ConfigParser(interpolation=cp.ExtendedInterpolation())
     config.read(config_file)
+    _replace_rel_abs_path(config, config_file)
+
     backend = config["BACKEND"]["backend"]
 
     # Set the parameters from the config file.
@@ -87,22 +115,28 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
                 run_pre_file = pp_file_sub
             else:
                 run_post_file = pp_file_sub
-#             print(pp_file_sub)
+
+    if "pre_post_file" in config["BATCH_OPTIONS"]:
+        pre_post_file = config["BATCH_OPTIONS"]["pre_post_file"]
+        run_pre_compute, run_post_compute = _read_pre_post_file(pre_post_file)
+
+        run_pre_compute = "".join(run_pre_compute)
+        run_post_compute = "".join(run_post_compute)
+    else:
+        run_pre_compute = _read_script(run_pre_file)
+        run_post_compute = _read_script(run_post_file)
+
+        # Merge the lists back into single strings.
+        run_pre_compute = "\n".join(run_pre_compute)
+        run_post_compute = "\n".join(run_post_compute)
 
     # Get all the commands either from file, or from lists:
     script_lines = _read_script(command_file)
-    run_pre_compute = _read_script(run_pre_file)
-    run_post_compute = _read_script(run_post_file)
-
-    # Merge the lists back into single strings.
-    run_pre_compute = "\n".join(run_pre_compute)
-    run_post_compute = "\n".join(run_post_compute)
 
     param["run_pre_compute"] = run_pre_compute
     param["run_post_compute"] = run_post_compute
 
     # If no output directory is given, create batch.${back-end}/${job_name}/.
-#     if output_dir is None:
     output_dir = os.path.join("batch."+backend, param["job_name"])
 
     if backend == "slurm_lisa":
