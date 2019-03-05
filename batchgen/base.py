@@ -12,6 +12,7 @@ from string import Template
 
 from batchgen.backend.parallel import Parallel
 from batchgen.backend.slurm_lisa import SlurmLisa
+from batchgen.ssh import send_batch_ssh
 
 
 def _params(config=None):
@@ -49,7 +50,7 @@ def _replace_rel_abs_path(config, config_file):
     config_dir_abs = os.path.abspath(config_dir)
 
     for key in config["BATCH_OPTIONS"]:
-        if re.match(r'.+?_(dir|file)', key):
+        if re.match(r'.+?_(dir|file)', key) and not re.match(r'^$.+*', key):
             # Create the absolute path from a possible relative path.
             newp = os.path.join(config_dir_abs, config["BATCH_OPTIONS"][key])
             config["BATCH_OPTIONS"][key] = newp
@@ -106,6 +107,18 @@ def _read_script(script):
 
 
 def _check_files(*args):
+    """ Check if files exist.
+
+    Arguments
+    ---------
+    args: str
+        List of files to check.
+
+    Returns
+    -------
+    int:
+        Number of non-existing files.
+    """
     n_error = 0
     for file in args:
         if not os.path.isfile(file) and file != "/dev/null":
@@ -135,8 +148,13 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
         return 1
 
     # Figure out the backend
-    config = cp.ConfigParser(interpolation=cp.ExtendedInterpolation())
+    config = cp.SafeConfigParser()
     config.read(config_file)
+
+    if "CONNECTION" in config:
+        send_batch_ssh(command_file, config)
+        return 0
+
     _replace_rel_abs_path(config, config_file)
 
     backend = config["BACKEND"]["backend"]
