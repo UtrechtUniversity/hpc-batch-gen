@@ -8,7 +8,6 @@ See __main__ for the Command Line Interface (CLI)
 import os
 import configparser as cp
 import re
-from string import Template
 
 from batchgen.backend.parallel import Parallel
 from batchgen.backend.slurm_lisa import SlurmLisa
@@ -29,9 +28,9 @@ def _params(config=None):
 
     # If a file is supplied, read the configuration.
     if config is not None:
-        for option in config["BATCH_OPTIONS"]:
-            parameters[option] = config["BATCH_OPTIONS"][option]
+        parameters.update(dict(config.items("BATCH_OPTIONS")))
 
+    print(parameters)
     return parameters
 
 
@@ -49,11 +48,14 @@ def _replace_rel_abs_path(config, config_file):
     config_dir = os.path.dirname(config_file)
     config_dir_abs = os.path.abspath(config_dir)
 
-    for key in config["BATCH_OPTIONS"]:
-        if re.match(r'.+?_(dir|file)', key) and not re.match(r'^$.+*', key):
+    for key in config.options("BATCH_OPTIONS"):
+        dir_file = config.get("BATCH_OPTIONS", key)
+        is_dir_file = (re.match(r'.+?_(dir|file)', dir_file) is not None)
+        start_w_dollar = (re.match(r'^\$', dir_file) is not None)
+        if is_dir_file and not start_w_dollar:
             # Create the absolute path from a possible relative path.
-            newp = os.path.join(config_dir_abs, config["BATCH_OPTIONS"][key])
-            config["BATCH_OPTIONS"][key] = newp
+            newp = os.path.join(config_dir_abs, dir_file)
+            config.set("BATCH_OPTIONS", key, newp)
 
 
 def _read_pre_post_file(filename):
@@ -120,9 +122,9 @@ def _check_files(*args):
         Number of non-existing files.
     """
     n_error = 0
-    for file in args:
-        if not os.path.isfile(file) and file != "/dev/null":
-            print("Error: file {file} does not exist.".format(file=file))
+    for filename in args:
+        if not os.path.isfile(filename) and filename != "/dev/null":
+            print("Error: file {file} does not exist.".format(file=filename))
             n_error += 1
     return n_error
 
@@ -151,29 +153,19 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
     config = cp.SafeConfigParser()
     config.read(config_file)
 
-    if "CONNECTION" in config:
+    if config.has_section("CONNECTION"):
         send_batch_ssh(command_file, config)
         return 0
 
     _replace_rel_abs_path(config, config_file)
 
-    backend = config["BACKEND"]["backend"]
+    backend = config.get("BACKEND", "backend")
 
     # Set the parameters from the config file.
     param = _params(config)
 
-    # Read options for pre/post commands from config file.
-    for pre_post in ["run_pre_file", "run_post_file"]:
-        if pre_post in config["BATCH_OPTIONS"]:
-            pp_file = config["BATCH_OPTIONS"][pre_post]
-            pp_file_sub = Template(pp_file).safe_substitute(param)
-            if pre_post == "run_pre_file":
-                run_pre_file = pp_file_sub
-            else:
-                run_post_file = pp_file_sub
-
-    if "pre_post_file" in config["BATCH_OPTIONS"]:
-        pre_post_file = config["BATCH_OPTIONS"]["pre_post_file"]
+    if config.has_option("BATCH_OPTIONS", "pre_post_file"):
+        pre_post_file = config.get("BATCH_OPTIONS", "pre_post_file")
         run_pre_compute, run_post_compute = _read_pre_post_file(pre_post_file)
 
         run_pre_compute = "".join(run_pre_compute)

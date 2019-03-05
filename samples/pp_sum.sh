@@ -6,7 +6,7 @@ if [ "${backend}" == "slurm_lisa" ]; then
 fi
 
 mkdir -p ${tmp_dir} 
-cd ${start_dir}
+cd ${base_dir}
 
 ## POST_COMMANDS ##
 
