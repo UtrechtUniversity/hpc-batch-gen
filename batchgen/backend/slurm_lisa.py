@@ -51,8 +51,10 @@ ${main_body}
 
 ${run_post_compute}
 
-echo "Job $$SLURM_JOBID ended at `date`" | mail $$USER -s \
-"Job: ${job_name}/${batch_id} ($$SLURM_JOBID)"
+if [ ${send_mail} == "True" ]; then
+    echo "Job $$SLURM_JOBID ended at `date`" | mail $$USER -s \
+    "Job: ${job_name}/${batch_id} ($$SLURM_JOBID)"
+fi
 date
 """)
         return t
@@ -65,9 +67,28 @@ date
         else:
             num_cores = 16
 
+        max_num_cores = max(num_cores, len(script_lines))
+        num_nodes = (len(script_lines)-1) // num_cores
+        cost_factor = 16*num_nodes
+
         param["script_lines"] = script_lines
         param["output_dir"] = output_dir
         param["num_cores"] = num_cores
+        param["max_num_cores"] = max_num_cores
+        param["num_nodes"] = num_nodes
+
+        hhmmss = param["clock_wall_time"].split(":").reverse()
+
+        new_ss = (hhmmss[0]*cost_factor)
+        new_mm = new_ss // 60
+        new_ss %= 60
+        new_mm += (hhmmss[1]*cost_factor)
+        new_hh = new_mm // 60
+        new_mm %= 60
+        new_hh += (hhmmss[2]*cost_factor)
+
+        new_hhmmss = "{hh}:{mm}:{ss}".format(hh=new_hh, mm=new_mm, ss=new_ss)
+        param["max_bill_time"] = new_hhmmss
         return param
 
     def _write_batch_files(self):
@@ -94,3 +115,23 @@ date
         my_exec = "for FILE in {output_dir}/batch*.sh; do sbatch $FILE; done"
 
         return my_exec.format(output_dir=output_dir)
+
+    def print_execution(self, exec_script):
+        par = self._params
+
+        print_template = Template("""\
+******************************************************
+**                 Running parameters               **
+******************************************************
+** Job name        : {job_name}                     **
+** Cores per node  : {max_num_cores}                **
+** Maximum run time: {clock_wall_time}              **
+** Number of nodes : {num_nodes}                    **
+** Max billing time: {max_bill_time}                **
+******************************************************
+** Execute the following on the command line (bash) **
+******************************************************
+
+{exec_script}
+        """.format(exec_script=exec_script, **par))
+        print(print_template)

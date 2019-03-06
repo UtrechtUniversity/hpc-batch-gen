@@ -12,6 +12,7 @@ import re
 from batchgen.backend.parallel import Parallel
 from batchgen.backend.slurm_lisa import SlurmLisa
 from batchgen.ssh import send_batch_ssh
+from batchgen.util import _read_script, _check_files, batch_dir
 
 
 def _params(config=None):
@@ -24,7 +25,9 @@ def _params(config=None):
     """
 
     parameters = {"clock_wall_time": "01:00:00", "job_name": "asr_simulation",
-                  "batch_id": 0, "run_pre_compute": "", "run_post_compute": ""}
+                  "batch_id": 0, "run_pre_compute": "", "run_post_compute": "",
+                  "send_mail": "False"
+                  }
 
     # If a file is supplied, read the configuration.
     if config is not None:
@@ -88,50 +91,10 @@ def _read_pre_post_file(filename):
     return (pre_lines, post_lines)
 
 
-def _read_script(script):
-    """ Function to load either a script file or list.
-
-    Arguments
-    ---------
-    script: str/str
-        Either a file to read, or a list of strings to use.
-
-    Returns
-    -------
-        List of strings where each element is one command.
-    """
-    if not isinstance(script, (list,)):
-        with open(script, "r") as f:
-            lines = f.readlines()
-    else:
-        lines = script
-    return lines
-
-
-def _check_files(*args):
-    """ Check if files exist.
-
-    Arguments
-    ---------
-    args: str
-        List of files to check.
-
-    Returns
-    -------
-    int:
-        Number of non-existing files.
-    """
-    n_error = 0
-    for filename in args:
-        if not os.path.isfile(filename) and filename != "/dev/null":
-            print("Error: file {file} does not exist.".format(file=filename))
-            n_error += 1
-    return n_error
-
-
 def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
-                           run_post_file="/dev/null", force_clear=False):
-    """Function to prepare for writing batch scripts.
+                           run_post_file="/dev/null", pre_post_file=None,
+                           force_clear=False):
+    """ Function to prepare for writing batch scripts.
 
     Arguments
     ---------
@@ -154,7 +117,7 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
     config.read(config_file)
 
     if config.has_section("CONNECTION"):
-        send_batch_ssh(command_file, config)
+        send_batch_ssh(command_file, config, force_clear)
         return 0
 
     _replace_rel_abs_path(config, config_file)
@@ -166,8 +129,9 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
 
     if config.has_option("BATCH_OPTIONS", "pre_post_file"):
         pre_post_file = config.get("BATCH_OPTIONS", "pre_post_file")
-        run_pre_compute, run_post_compute = _read_pre_post_file(pre_post_file)
 
+    if pre_post_file is not None:
+        run_pre_compute, run_post_compute = _read_pre_post_file(pre_post_file)
         run_pre_compute = "".join(run_pre_compute)
         run_post_compute = "".join(run_post_compute)
     else:
@@ -185,15 +149,15 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
     param["run_post_compute"] = run_post_compute
 
     # If no output directory is given, create batch.${back-end}/${job_name}/.
-    output_dir = os.path.join("batch."+backend, param["job_name"])
+    output_dir = batch_dir(backend, param["job_name"])
 
     if backend == "slurm_lisa":
         batch = SlurmLisa()
     elif backend == "parallel":
         batch = Parallel()
     else:
-        print("Error: no valid backend detected, supplied {cfg_file}".format(
-               cfg_file=config_file))
+        print("Error: no valid backend detected, supplied in file {cfg_file}".
+              format(cfg_file=config_file))
         return 1
 
     batch.write_batch(script_lines, param, output_dir, force_clear)

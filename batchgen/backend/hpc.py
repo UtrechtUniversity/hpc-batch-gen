@@ -17,17 +17,7 @@ def double_substitute(template, param):
     return final_batch_str
 
 
-def print_execution(exec_script):
-    print("""
-******************************************************
-** Execute the following on the command line (bash) **
-******************************************************
-
-{exec_script}
-""".format(exec_script=exec_script))
-
-
-def _check_clean_directory(output_dir, force_clear=False):
+def make_check_clean_directory(output_dir, force_clear=False):
     """ Check if batch output directory is empty.
 
     Arguments
@@ -42,6 +32,8 @@ def _check_clean_directory(output_dir, force_clear=False):
     bool:
         True if empty (now), False if unable to empty.
     """
+    # First create the directory.
+    pathlib2.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     if os.listdir(output_dir):
         if not force_clear:
@@ -90,15 +82,14 @@ class HPC(object):
             Directory for batch files.
         """
 
-        pathlib2.Path(output_dir).mkdir(parents=True, exist_ok=True)
-        if not _check_clean_directory(output_dir, force_clear):
+        if not make_check_clean_directory(output_dir, force_clear):
             return
 
         self._batch_template = self._create_batch_template()
         self._params = self._parse_params(param, script_lines, output_dir)
 
         my_exec = self._write_batch_files()
-        print_execution(my_exec)
+        self._print_execution(my_exec)
 
     def _create_batch_template(self):
         """ Function to generate a batch template.
@@ -110,8 +101,8 @@ class HPC(object):
 
     def _parse_params(self, param, script_lines, output_dir):
         """ Parse parameters to obtain specific substitutions, which
-        are not necessarily the same for different backends.
-        Mandatory implementation for derived classes.
+            are not necessarily the same for different backends.
+            Mandatory implementation for derived classes.
 
         Arguments
         ---------
@@ -128,7 +119,7 @@ class HPC(object):
 
     def _write_batch_files(self):
         """ Write batch scripts, helper files, and return command
-        for submission. Mandatory implementation for derived classes.
+            for submission. Mandatory implementation for derived classes.
 
         Arguments
         ---------
@@ -143,3 +134,12 @@ class HPC(object):
 
         raise NotImplementedError(
             "Error: broken module; implement _write_batch_files method.")
+
+    def print_execution(self, exec_script):
+        print("""
+******************************************************
+** Execute the following on the command line (bash) **
+******************************************************
+
+{exec_script}
+        """.format(exec_script=exec_script))

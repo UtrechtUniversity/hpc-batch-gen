@@ -4,10 +4,16 @@ Module for interaction with remote servers.
 @author: Raoul Schram
 """
 
-import subprocess32 as subprocess
+import os
+import re
 import copy
-from string import Template
 import shlex
+import subprocess32 as subprocess
+from string import Template
+
+from batchgen.util import batch_dir
+from batchgen.backend.hpc import make_check_clean_directory
+from __builtin__ import True
 
 
 def _ssh_template():
@@ -15,11 +21,57 @@ def _ssh_template():
     ssh = Template("""ssh -q -o ConnectTimeout=3 -o ServerAliveInterval=3 \
 -o ServerAliveCountmax=1 ${user}${server} 'cd ${remote_dir}; batchgen \
 ${command_file} ${config_file}'
-    """)
+""")
     return ssh
 
 
-def send_batch_ssh(command_file, config):
+def _remote_submit_template():
+    sub_templ = Template("""#!/bin/bash
+
+ssh -q -o ConnectTimeout=3 -o ServerAliveInterval=3 \
+-o ServerAliveCountmax=1 ${user}${server} 'cd ${remote_dir}; ${exec_line}'
+""")
+    return sub_templ
+
+
+def parse_remote_msg(msg):
+    """ Figure out the different components of the output of the remote script.
+
+    Arguments
+    ---------
+    msg: str
+        Unicode string that encodes the output.
+
+    Returns
+    -------
+    error_msg: str
+        List of error messages, empty list means no errors.
+    exec_line: str
+        Line to execute on remote (anything not starting with #/*/Error
+    info_msg: str
+        Anything starting with asterixes (*)
+    """
+    msg = msg.split("\n")
+    exec_line = ""
+    info_msg = ""
+    error_msg = []
+    for line in msg:
+        sw_hash = re.match(r'^#', line) is not None
+        sw_asterix = re.match(r'^\*', line) is not None
+        sw_error = re.match(r'^Error', line) is not None
+        if sw_asterix:
+            info_msg += line+"\n"
+        elif line == "" or sw_hash:
+            pass
+        elif sw_error:
+            error_msg.append(line)
+        else:
+            exec_line += line
+
+    return error_msg, exec_line, info_msg
+
+
+def send_batch_ssh(command_file, config, force_clear=False):
     """ Prepare a batch on a remote server.
 
     Arguments
@@ -36,8 +88,11 @@ def send_batch_ssh(command_file, config):
         user = ""
     server = config.get("CONNECTION", "server")
     remote_dir = config.get("CONNECTION", "remote_dir")
+    backend = config.get("BACKEND", "backend")
+    job_name = config.get("BATCH_OPTIONS", "job_name")
 
     # Write new configuration file with remote_dir as base_dir.
+    # WARNING: this is not a deep copy, so the var config is also changed.
     new_config = copy.copy(config)
     new_config.remove_section("CONNECTION")
     new_config.set("BATCH_OPTIONS", "base_dir", remote_dir)
@@ -60,4 +115,30 @@ def send_batch_ssh(command_file, config):
                                        command_file=command_file,
                                        config_file=new_config_file)
 
-    subprocess.run(shlex.split(ssh_command))
+    res = subprocess.run(shlex.split(ssh_command), stdout=subprocess.PIPE)
+    msg = res.stdout.decode('utf-8')
+
+    # Check for error at remote server.
+    error_msg, exec_line, info_msg = parse_remote_msg(msg)
+    if len(error_msg) != 0:
+        print("----- Remote error at {server} -----".format(server=server))
+        print("\n".join(error_msg))
+        return
+
+    # Output directory for script that remotely submits the script.
+    output_dir = batch_dir(backend, job_name, remote=True)
+    if not make_check_clean_directory(output_dir, force_clear=force_clear):
+        return
+
+    sub_templ = _remote_submit_template()
+    sub_script = sub_templ.safe_substitute(user=user, server=server,
+                                           remote_dir=remote_dir,
+                                           exec_line=exec_line)
+    sub_file = os.path.join(output_dir, "submit_remote.sh")
+    with open(sub_file, "w") as f:
+        f.write(sub_script)
+    os.chmod(sub_file, 0o755)
+
+    # Print instructions
+    print(info_msg)
+    print(sub_file)
