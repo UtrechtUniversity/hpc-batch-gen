@@ -8,6 +8,7 @@ import os
 from string import Template
 
 from batchgen.backend.hpc import HPC, double_substitute
+from batchgen.util import mult_time
 
 
 def _get_body(script_lines):
@@ -67,8 +68,9 @@ date
         else:
             num_cores = 16
 
-        max_num_cores = max(num_cores, len(script_lines))
-        num_nodes = (len(script_lines)-1) // num_cores
+        num_jobs = len(script_lines)
+        max_num_cores = max(num_cores, num_jobs)
+        num_nodes = (num_jobs-1) // num_cores + 1
         cost_factor = 16*num_nodes
 
         param["script_lines"] = script_lines
@@ -76,19 +78,10 @@ date
         param["num_cores"] = num_cores
         param["max_num_cores"] = max_num_cores
         param["num_nodes"] = num_nodes
+        param["num_jobs"] = num_jobs
 
-        hhmmss = param["clock_wall_time"].split(":").reverse()
-
-        new_ss = (hhmmss[0]*cost_factor)
-        new_mm = new_ss // 60
-        new_ss %= 60
-        new_mm += (hhmmss[1]*cost_factor)
-        new_hh = new_mm // 60
-        new_mm %= 60
-        new_hh += (hhmmss[2]*cost_factor)
-
-        new_hhmmss = "{hh}:{mm}:{ss}".format(hh=new_hh, mm=new_mm, ss=new_ss)
-        param["max_bill_time"] = new_hhmmss
+        param["max_bill_time"] = mult_time(param["clock_wall_time"],
+                                           cost_factor)
         return param
 
     def _write_batch_files(self):
@@ -116,22 +109,23 @@ date
 
         return my_exec.format(output_dir=output_dir)
 
-    def print_execution(self, exec_script):
+    def _print_execution(self, exec_script):
         par = self._params
 
-        print_template = Template("""\
+        print_template = """\
 ******************************************************
 **                 Running parameters               **
 ******************************************************
-** Job name        : {job_name}                     **
-** Cores per node  : {max_num_cores}                **
-** Maximum run time: {clock_wall_time}              **
-** Number of nodes : {num_nodes}                    **
-** Max billing time: {max_bill_time}                **
+** Job name        : {job_name: <31}**
+** Number of jobs  : {num_jobs: <31}**
+** Cores per node  : {max_num_cores: <31}**
+** Maximum run time: {clock_wall_time: <31}**
+** Number of nodes : {num_nodes: <31}**
+** Max billing time: {max_bill_time: <31}**
 ******************************************************
 ** Execute the following on the command line (bash) **
 ******************************************************
 
 {exec_script}
-        """.format(exec_script=exec_script, **par))
+        """.format(exec_script=exec_script, **par)
         print(print_template)

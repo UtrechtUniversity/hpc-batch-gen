@@ -33,7 +33,6 @@ def _params(config=None):
     if config is not None:
         parameters.update(dict(config.items("BATCH_OPTIONS")))
 
-    print(parameters)
     return parameters
 
 

@@ -55,3 +55,20 @@ def batch_dir(backend, job_name, remote=False):
     else:
         new_dir = os.path.join("batch."+backend, job_name)
     return new_dir
+
+
+def mult_time(clock_wall_time, mult):
+    hhmmss = clock_wall_time.split(":")
+    hhmmss.reverse()
+
+    new_ss = (int(hhmmss[0])*mult)
+    new_mm = new_ss // 60
+    new_ss %= 60
+    new_mm += (int(hhmmss[1])*mult)
+    new_hh = new_mm // 60
+    new_mm %= 60
+    new_hh += (int(hhmmss[2])*mult)
+
+    new_hhmmss = "{hh:02d}:{mm:02d}:{ss:02d}".format(hh=new_hh, mm=new_mm,
+                                                     ss=new_ss)
+    return new_hhmmss

@@ -6,6 +6,7 @@ GNU Parallel backend for running batch style scripts.
 
 import os
 from string import Template
+from multiprocessing import cpu_count
 
 from batchgen.backend.hpc import HPC, double_substitute
 
@@ -29,6 +30,7 @@ ${run_post_compute}
             param["num_cores_w_arg"] = "-j " + str(param["num_cores"])
         else:
             param["num_cores_w_arg"] = ""
+            param["num_cores"] = cpu_count()
 
         command_file = os.path.join(output_dir, "commands.sh")
         batch_file = os.path.join(output_dir, "batch.sh")
@@ -38,6 +40,8 @@ ${run_post_compute}
         param["command_file"] = command_file
         param["script_lines"] = script_lines
         param["batch_file"] = batch_file
+        param["num_jobs"] = len(script_lines)
+
         return param
 
     def _write_batch_files(self):
@@ -60,3 +64,21 @@ ${run_post_compute}
 
         # Bash command to submit the scripts.
         return batch_file
+
+    def _print_execution(self, exec_script):
+        par = self._params
+        print_template = """\
+******************************************************
+**                 Running parameters               **
+******************************************************
+** Job name        : {job_name: <31}**
+** Number of jobs  : {num_jobs: <31}**
+** Number of cores : {num_cores: <31}**
+** Running time    : {clock_wall_time: <31}**
+******************************************************
+** Execute the following on the command line (bash) **
+******************************************************
+
+{exec_script}
+        """.format(exec_script=exec_script, **par)
+        print(print_template)

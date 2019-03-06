@@ -5,4 +5,9 @@
 ./sum.sh 234 ${tmp_dir}
 ./sum.sh 5293 ${tmp_dir}
 ./sum.sh 529384 ${tmp_dir}
-./sum.sh 21314 ${tmp_dir}
+./sum.sh 1782641 ${tmp_dir}
+./sum.sh 128342 ${tmp_dir}
+./sum.sh 12984715 ${tmp_dir}
+./sum.sh 712948 ${tmp_dir}
+./sum.sh 452489 ${tmp_dir}
+./sum.sh 1982641 ${tmp_dir}

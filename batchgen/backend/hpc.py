@@ -135,7 +135,7 @@ class HPC(object):
         raise NotImplementedError(
             "Error: broken module; implement _write_batch_files method.")
 
-    def print_execution(self, exec_script):
+    def _print_execution(self, exec_script):
         print("""
 ******************************************************
 ** Execute the following on the command line (bash) **

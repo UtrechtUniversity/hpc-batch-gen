@@ -20,7 +20,7 @@ def _ssh_template():
     """ SSH command to log into remote server. """
     ssh = Template("""ssh -q -o ConnectTimeout=3 -o ServerAliveInterval=3 \
 -o ServerAliveCountmax=1 ${user}${server} 'cd ${remote_dir}; batchgen \
-${command_file} ${config_file}'
+${command_file} ${config_file} || echo "Error: while executing batchgen."'
 """)
     return ssh
 
@@ -115,14 +115,17 @@ def send_batch_ssh(command_file, config, force_clear=False):
                                        command_file=command_file,
                                        config_file=new_config_file)
 
-    res = subprocess.run(shlex.split(ssh_command), stdout=subprocess.PIPE)
+    res = subprocess.run(shlex.split(ssh_command), stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
     msg = res.stdout.decode('utf-8')
 
     # Check for error at remote server.
     error_msg, exec_line, info_msg = parse_remote_msg(msg)
     if len(error_msg) != 0:
         print("----- Remote error at {server} -----".format(server=server))
-        print("\n".join(error_msg))
+        print(msg)
+        print("----- stderr -----")
+        print(res.stderr.decode('utf-8'))
         return
 
     # Output directory for script that remotely submits the script.
