@@ -52,7 +52,7 @@ ${main_body}
 
 ${run_post_compute}
 
-if [ ${send_mail} == "True" ]; then
+if [ "${send_mail}" == "True" ]; then
     echo "Job $$SLURM_JOBID ended at `date`" | mail $$USER -s \
     "Job: ${job_name}/${batch_id} ($$SLURM_JOBID)"
 fi

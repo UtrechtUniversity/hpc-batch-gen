@@ -90,12 +90,17 @@ def send_batch_ssh(command_file, config, force_clear=False):
     remote_dir = config.get("CONNECTION", "remote_dir")
     backend = config.get("BACKEND", "backend")
     job_name = config.get("BATCH_OPTIONS", "job_name")
+    pre_post_file = config.get("BATCH_OPTIONS", "pre_post_file")
 
     # Write new configuration file with remote_dir as base_dir.
     # WARNING: this is not a deep copy, so the var config is also changed.
+    remote_pp_file = "remote_pp_{job_name}.sh".format(job_name=job_name)
+    # Absolute path (from $HOME) to copy pre_post_file.
+    long_remote_pp_file = os.path.join(remote_dir, remote_pp_file)
     new_config = copy.copy(config)
     new_config.remove_section("CONNECTION")
     new_config.set("BATCH_OPTIONS", "base_dir", remote_dir)
+    new_config.set("BATCH_OPTIONS", "pre_post_file", remote_pp_file)
     new_config_file = "remote_cfg.ini"
     with open(new_config_file, "w") as f:
         new_config.write(f)
@@ -106,6 +111,13 @@ def send_batch_ssh(command_file, config, force_clear=False):
     copy_command = copy_command.format(command_file=command_file, user=user,
                                        server=server, remote_cf=remote_dir,
                                        new_config_file=new_config_file)
+    # Copy pre_post_file to remote server.
+    subprocess.run(shlex.split(copy_command))
+
+    copy_command = "scp -q {pp_file} {user}{server}:{remote_pp_file}"
+    copy_command = copy_command.format(pp_file=pre_post_file, user=user,
+                                       server=server,
+                                       remote_pp_file=long_remote_pp_file)
     subprocess.run(shlex.split(copy_command))
 
     # SSH into the remote server and run batchgen with new config file.
@@ -142,6 +154,6 @@ def send_batch_ssh(command_file, config, force_clear=False):
         f.write(sub_script)
     os.chmod(sub_file, 0o755)
 
-    # Print instructions
+    # Print instructions and info
     print(info_msg)
     print(sub_file)
