@@ -32,6 +32,7 @@ def _params(config=None):
     # If a file is supplied, read the configuration.
     if config is not None:
         parameters.update(dict(config.items("BATCH_OPTIONS")))
+        parameters.update(dict(config.items("BACKEND")))
 
     return parameters
 

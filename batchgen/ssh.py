@@ -18,9 +18,10 @@ from __builtin__ import True
 
 def _ssh_template():
     """ SSH command to log into remote server. """
-    ssh = Template("""ssh -q -o ConnectTimeout=3 -o ServerAliveInterval=3 \
--o ServerAliveCountmax=1 ${user}${server} 'cd ${remote_dir}; batchgen \
-${command_file} ${config_file} || echo "Error: while executing batchgen."'
+    ssh = Template("""
+    ssh -q -o ConnectTimeout=10 -o ServerAliveInterval=10 ${user}${server} \
+    'cd ${remote_dir}; batchgen ${command_file} ${config_file} || \
+    echo "Error: while executing batchgen."'
 """)
     return ssh
 
@@ -28,8 +29,8 @@ ${command_file} ${config_file} || echo "Error: while executing batchgen."'
 def _remote_submit_template():
     sub_templ = Template("""#!/bin/bash
 
-ssh -q -o ConnectTimeout=3 -o ServerAliveInterval=3 \
--o ServerAliveCountmax=1 ${user}${server} 'cd ${remote_dir}; ${exec_line}'
+    ssh -q -o ConnectTimeout=10 -o ServerAliveInterval=10 ${user}${server} \
+    'cd ${remote_dir}; ${exec_line}'
 """)
     return sub_templ
 
@@ -126,7 +127,6 @@ def send_batch_ssh(command_file, config, force_clear=False):
                                        remote_dir=remote_dir,
                                        command_file=command_file,
                                        config_file=new_config_file)
-
     res = subprocess.run(shlex.split(ssh_command), stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     msg = res.stdout.decode('utf-8')

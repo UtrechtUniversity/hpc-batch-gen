@@ -5,7 +5,7 @@ if [ "${backend}" == "slurm_lisa" ]; then
     module load Python/3.6.1-intel-2016b
 fi
 
-mkdir -p ${tmp_dir} 
+mkdir -p ${tmp_dir}
 cd ${base_dir}
 
 ## POST_COMMANDS ##
