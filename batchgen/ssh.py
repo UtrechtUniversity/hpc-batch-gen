@@ -8,7 +8,11 @@ import os
 import re
 import copy
 import shlex
-import subprocess32 as subprocess
+try:
+    import subprocess32 as subprocess
+except ImportError as e:
+    import subprocess
+
 from string import Template
 
 from batchgen.util import batch_dir
