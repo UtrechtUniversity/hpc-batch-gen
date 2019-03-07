@@ -13,7 +13,6 @@ from string import Template
 
 from batchgen.util import batch_dir
 from batchgen.backend.hpc import make_check_clean_directory
-from __builtin__ import True
 
 
 def _ssh_template():

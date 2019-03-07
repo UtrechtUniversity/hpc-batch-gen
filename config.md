@@ -12,16 +12,12 @@ Under this section there is just a single option, namely its backend.
 
 ##### backend
 
-Should be set to one of the available backends, which right now is *parallel* (GNU parallel), or *slurm_lisa* (SLURM batch system on Lisa HPC cluster at SURFSara). 
+Should be set to one of the available backends, which right now is *parallel* (GNU Parallel), or *slurm_lisa* (SLURM batch system on Lisa HPC cluster at SURFSara). 
 
 
 ### [BATCH_OPTIONS] (mandatory)
 
 In this section options that relate to the specifics such as hardware, node configuration, file structure etc.
-
-##### clock\_wall\_time (recommended)
-
-The maximum running time of the batch, format hh:mm:ss. Default is 1 hour. In the case of batch systems it is highly recommended to set this to the appropriate amount. Not too long, because it might have a lower priority in the queue, and definitely not too short, since that will cause the batch to be prematurely aborted.
 
 ##### num\_cores (recommended)
 
@@ -35,6 +31,20 @@ This is the name of the job. The directory where batchfiles are stored is named 
 ##### pre\_post\_file (recommended)
 
 File in which the commands are put that are run for each node, before or after computation (see [readme](README.md)). Pre-commands are prefaced by:
+
+
+##### clock\_wall\_time [SLURM] (recommended)
+
+The maximum running time of the batch, format hh:mm:ss. Default is 1 hour. In the case of batch systems it is highly recommended to set this to the appropriate amount. Not too long, because it might have a lower priority in the queue, and definitely not too short, since that will cause the batch to be prematurely aborted.
+
+
+##### num\_cores\_simul [SLURM] (optional)
+
+The number of tasks to run simultaneous on a node. Should most probably equal or less than *num_cores*.
+
+##### num\_tasks\_per\_node [SLURM] (optional)
+
+The number of tasks to be run in total per node. If this is bigger than *num_cores_simul*, the commands are partly serialized.
 
 ```
 ### PRE_COMMANDS ###
@@ -88,6 +98,12 @@ clock_wall_time = 02:00:00
 
 # Set number of cores per node to 16.
 num_cores = 16
+
+# Set number of simultaneously running tasks.
+num_cores_simul = 15
+
+# Set maxim number of tasks per node.
+num_tasks_per_node = 30
 
 # Set job name to "asr_sim"
 job_name = asr_sim

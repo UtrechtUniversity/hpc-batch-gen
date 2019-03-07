@@ -27,6 +27,12 @@ pip install --user git+https://github.com/UtrechtUniversity/hpc-batch-gen.git
 python -m batchgen command_file config_file [-pre run_pre_file] [-post run_post_file]
 ```
 
+or if you have your PATH variable setup:
+
+```bash
+batchgen command_file config_file [-pre run_pre_file] [-post run_post_file]
+```
+
 ##### input_script
 This is a script file that you want to run/parallelize. Every line should be a simple bash command (no backgrounding necessary).
 
