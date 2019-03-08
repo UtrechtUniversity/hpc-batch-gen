@@ -1,4 +1,4 @@
-# batchgen
+# Batchgen
 Package for generating simple batch scripts in HPC environments. Currently available: GNU Parallel, SLURM backend. 
 
 In its current implementation, it will only **create** the batch files for submission, and **not** actually submit them. This might change in future versions.
@@ -49,14 +49,14 @@ For a more detailed description see [here](doc/cli.md).
 The second option is to use the package directly within Python. There are two main ways to access the package. The first is similar to access provided through the CLI:
 
 ```python
-batch_script_from_files(command_file, config_file, pre_post_file=None,
+batch_from_files(command_file, config_file, pre_post_file=None,
 					    pre_com_file=None, post_com_file=None, force_clear=False)
 ```
 
 The second method bypasses the need to create as many files by supplying the package with strings (except the configuration file):
 
 ```python
-generate_batch_scripts(command_string, config_file, pre_com_string="",
+batch_from_strings(command_string, config_file, pre_com_string="",
                        post_com_string="", force_clear=False)
 ```
 
