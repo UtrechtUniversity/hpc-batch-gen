@@ -5,9 +5,10 @@ Some helpful functions.
 '''
 
 import os
+import re
 
 
-def _read_script(script):
+def _read_file(script):
     """ Function to load either a script file or list.
 
     Arguments
@@ -19,12 +20,35 @@ def _read_script(script):
     -------
         List of strings where each element is one command.
     """
-    if not isinstance(script, (list,)):
-        with open(script, "r") as f:
-            lines = f.readlines()
-    else:
-        lines = script
-    return lines
+    if script is None:
+        return None
+    with open(script, "r") as f:
+        script_string = f.read()
+    return script_string
+
+
+def _split_commands(script):
+    """ Split commands from a string into a list of commands.
+
+    Arguments
+    ---------
+    script: str
+        Command as read directly from a file.
+
+    Returns
+    -------
+    str:
+        List of commands, lines with only whitespce removed,
+        and also lines starting with #.
+    """
+    real_commands = []
+    for line in script.split("\n"):
+        only_whitespace = re.match(r"\A\s*\Z", line) is not None
+        sw_hash = re.match(r"^#", line) is not None
+        if only_whitespace or sw_hash:
+            continue
+        real_commands.append(line)
+    return real_commands
 
 
 def _check_files(*args):
@@ -42,6 +66,8 @@ def _check_files(*args):
     """
     n_error = 0
     for filename in args:
+        if filename is None:
+            continue
         if not os.path.isfile(filename) and filename != "/dev/null":
             print("Error: file {file} does not exist.".format(file=filename))
             n_error += 1
@@ -58,6 +84,20 @@ def batch_dir(backend, job_name, remote=False):
 
 
 def mult_time(clock_wall_time, mult):
+    """ Multiply times in hh:mm:ss by some multiplier.
+
+    Arguments
+    ---------
+    clock_wall_time: str
+        Time delta in hh:mm:ss format.
+    mult
+        Multiplier for the time.
+
+    Returns
+    -------
+    str:
+        Time delta multiplied by the multiplier in hh:mm:ss format.
+    """
     hhmmss = clock_wall_time.split(":")
     hhmmss.reverse()
 

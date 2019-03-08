@@ -75,7 +75,7 @@ def parse_remote_msg(msg):
     return error_msg, exec_line, info_msg
 
 
-def send_batch_ssh(command_file, config, force_clear=False):
+def send_batch_ssh(command_string, config, force_clear=False):
     """ Prepare a batch on a remote server.
 
     Arguments
@@ -109,11 +109,16 @@ def send_batch_ssh(command_file, config, force_clear=False):
     with open(new_config_file, "w") as f:
         new_config.write(f)
 
+    new_command_file = "remote_command_script.sh"
+    with open(new_command_file, "w") as f:
+        f.write(command_string)
+
     # Copy the command file and the configuration file to remote server.
     copy_command = "scp -q {command_file} {new_config_file} " \
                    "{user}{server}:{remote_cf}"
-    copy_command = copy_command.format(command_file=command_file, user=user,
-                                       server=server, remote_cf=remote_dir,
+    copy_command = copy_command.format(command_file=new_command_file,
+                                       user=user, server=server,
+                                       remote_cf=remote_dir,
                                        new_config_file=new_config_file)
     # Copy pre_post_file to remote server.
     subprocess.run(shlex.split(copy_command))
@@ -128,7 +133,7 @@ def send_batch_ssh(command_file, config, force_clear=False):
     ssht = _ssh_template()
     ssh_command = ssht.safe_substitute(user=user, server=server,
                                        remote_dir=remote_dir,
-                                       command_file=command_file,
+                                       command_file=new_command_file,
                                        config_file=new_config_file)
     res = subprocess.run(shlex.split(ssh_command), stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)

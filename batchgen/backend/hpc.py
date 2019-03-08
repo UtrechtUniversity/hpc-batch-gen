@@ -5,9 +5,10 @@ Base class for HPC backends.
 """
 
 import os
+import errno
 from string import Template
 
-import pathlib2
+from batchgen.util import _split_commands
 
 
 def double_substitute(template, param):
@@ -33,7 +34,12 @@ def make_check_clean_directory(output_dir, force_clear=False):
         True if empty (now), False if unable to empty.
     """
     # First create the directory.
-    pathlib2.Path(output_dir).mkdir(parents=True, exist_ok=True)
+    try:
+        os.makedirs(output_dir)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+#     pathlib2.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     if os.listdir(output_dir):
         if not force_clear:
@@ -69,7 +75,7 @@ class HPC(object):
         self._params = None
         self._batch_template = None
 
-    def write_batch(self, script_lines, param, output_dir, force_clear=False):
+    def write_batch(self, script_lines, param, batch_dir, force_clear=False):
         """ Function to create submitable batch scripts.
 
         Arguments
@@ -82,11 +88,13 @@ class HPC(object):
             Directory for batch files.
         """
 
-        if not make_check_clean_directory(output_dir, force_clear):
+        if not make_check_clean_directory(batch_dir, force_clear):
             return
 
         self._batch_template = self._create_batch_template()
-        self._params = self._parse_params(param, script_lines, output_dir)
+        param["script_lines"] = _split_commands(script_lines)
+        param["batch_dir"] = batch_dir
+        self._params = self._parse_params(param)
 
         my_exec = self._write_batch_files()
         self._print_execution(my_exec)
@@ -99,7 +107,7 @@ class HPC(object):
         raise NotImplementedError(
             "Error: broken module; implement _create_batch_template.")
 
-    def _parse_params(self, param, script_lines, output_dir):
+    def _parse_params(self, param):
         """ Parse parameters to obtain specific substitutions, which
             are not necessarily the same for different backends.
             Mandatory implementation for derived classes.

@@ -47,10 +47,7 @@ setup(
     keywords='batch systems parallelization',
     packages=find_packages(exclude=['samples']),
 
-    install_requires=[
-        "configparser",
-        "pathlib2",
-    ],
+    install_requires=[],
 
     extras_require={
     },

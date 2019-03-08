@@ -1,3 +1,7 @@
+# We can do comments here and they won't be recognized as commands
+
+# Random whitespace should also not be seen as such.
+
 ./sum.sh 0 ${tmp_dir}
 ./sum.sh 1 ${tmp_dir}
 ./sum.sh 10 ${tmp_dir}

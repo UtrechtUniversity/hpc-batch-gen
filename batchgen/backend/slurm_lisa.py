@@ -46,11 +46,9 @@ class SlurmLisa(HPC):
 #SBATCH --tasks-per-node=${num_cores}
 #SBATCH -J ${job_name}
 
-${run_pre_compute}
-
+${pre_com_string}
 ${main_body}
-
-${run_post_compute}
+${post_com_string}
 
 if [ "${send_mail}" == "True" ]; then
     echo "Job $$SLURM_JOBID ended at `date`" | mail $$USER -s \
@@ -60,7 +58,7 @@ date
 """)
         return t
 
-    def _parse_params(self, param, script_lines, output_dir):
+    def _parse_params(self, param):
 
         # If the number of cores is not supplied, set it to the default 16.
         if "num_cores" in param:
@@ -75,13 +73,11 @@ date
         param["num_tasks_per_node"] = int(param["num_tasks_per_node"])
 
         tasks_per_node = param["num_tasks_per_node"]
-        num_tasks = len(script_lines)
+        num_tasks = len(param["script_lines"])
         max_num_cores = min(num_cores, num_tasks)
         num_nodes = (num_tasks-1) // tasks_per_node + 1
         cost_factor = 16*num_nodes
 
-        param["script_lines"] = script_lines
-        param["output_dir"] = output_dir
         param["num_cores"] = num_cores
         param["max_num_cores"] = max_num_cores
         param["num_nodes"] = num_nodes
@@ -96,15 +92,15 @@ date
         par = self._params
         script_lines = par["script_lines"]
         num_cores = par["num_cores"]
-        output_dir = par["output_dir"]
+        batch_dir = par["batch_dir"]
         num_tasks = par["num_tasks"]
         tpn = par["num_tasks_per_node"]
         ncs = par["num_cores_simul"]
         # Split the commands in batches.
         for batch_id, i in enumerate(range(0, num_tasks, tpn)):
             # Output file
-            output_file = os.path.join(output_dir,
-                                       "batch" + str(batch_id) + ".sh")
+            batch_file = os.path.join(batch_dir,
+                                      "batch" + str(batch_id) + ".sh")
             par["main_body"] = _get_body(script_lines[i:i+tpn], ncs)
             par["batch_id"] = batch_id
             if len(script_lines[i:i+tpn]) < num_cores:
@@ -112,13 +108,13 @@ date
 
             # Allow for one more substitution to facilitate user substitution.
             batch_script = double_substitute(self._batch_template, par)
-            with open(output_file, "w") as f:
+            with open(batch_file, "w") as f:
                 f.write(batch_script)
 
         # Execute the following to submit the batch.
-        my_exec = "for FILE in {output_dir}/batch*.sh; do sbatch $FILE; done"
+        my_exec = "for FILE in {batch_dir}/batch*.sh; do sbatch $FILE; done"
 
-        return my_exec.format(output_dir=output_dir)
+        return my_exec.format(batch_dir=batch_dir)
 
     def _print_execution(self, exec_script):
         par = self._params

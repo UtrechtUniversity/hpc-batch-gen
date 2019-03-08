@@ -17,14 +17,13 @@ class Parallel(HPC):
         t = Template("""
 #!/bin/bash
 
-${run_pre_compute}
+${pre_com_string}
 parallel ${num_cores_w_arg}< ${command_file}
-${run_post_compute}
+${post_com_string}
 """)
         return t
 
-    def _parse_params(self, param, script_lines, output_dir):
-
+    def _parse_params(self, param):
         # If num_cores is not supplied let parallel auto-detect.
         if "num_cores" in param:
             param["num_cores_w_arg"] = "-j " + str(param["num_cores"])
@@ -32,20 +31,19 @@ ${run_post_compute}
             param["num_cores_w_arg"] = ""
             param["num_cores"] = cpu_count()
 
-        command_file = os.path.join(output_dir, "commands.sh")
-        batch_file = os.path.join(output_dir, "batch.sh")
+        batch_dir = param["batch_dir"]
+        command_file = os.path.join(batch_dir, "commands.sh")
+        batch_file = os.path.join(batch_dir, "batch.sh")
         command_file = os.path.abspath(command_file)
         batch_file = os.path.abspath(batch_file)
 
         param["command_file"] = command_file
-        param["script_lines"] = script_lines
         param["batch_file"] = batch_file
-        param["num_jobs"] = len(script_lines)
+        param["num_jobs"] = len(param["script_lines"])
 
         return param
 
     def _write_batch_files(self):
-
         par = self._params
         batch_str = double_substitute(self._batch_template, par)
         script_lines = Template("\n".join(par["script_lines"]))

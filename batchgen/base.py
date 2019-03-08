@@ -6,13 +6,17 @@ See __main__ for the Command Line Interface (CLI)
 """
 
 import os
-import configparser as cp
+try:
+    import configparser as cp
+except ImportError as e:
+    import ConfigParser as cp
+
 import re
 
 from batchgen.backend.parallel import Parallel
 from batchgen.backend.slurm_lisa import SlurmLisa
 from batchgen.ssh import send_batch_ssh
-from batchgen.util import _read_script, _check_files, batch_dir
+from batchgen.util import _read_file, _check_files, batch_dir
 
 
 def _params(config=None):
@@ -76,24 +80,51 @@ def _read_pre_post_file(filename):
     str:
         Post-commands split up per line.
     """
-    pre_lines = []
-    post_lines = []
-    cur_lines = pre_lines
+    pre_lines = ""
+    post_lines = ""
+    cur_position = "pre"
     with open(filename, "r") as f:
-        for cur_line in f:
+        for line in f:
             # Check for switching or pre/post commands.
-            if re.match(r"## PRE_COMMANDS ##*", cur_line):
-                cur_lines = pre_lines
-            elif re.match(r"## POST_COMMANDS ##*", cur_line):
-                cur_lines = post_lines
+            if re.match(r"## PRE_COMMANDS ##*", line):
+                cur_position = "pre"
+            elif re.match(r"## POST_COMMANDS ##*", line):
+                cur_position = "post"
             else:
-                cur_lines.append(cur_line)
+                if cur_position == "pre":
+                    pre_lines += line
+                else:
+                    post_lines += line
+
     return (pre_lines, post_lines)
 
 
-def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
-                           run_post_file="/dev/null", pre_post_file=None,
-                           force_clear=False):
+def batch_script_from_files(command_file, config_file, pre_post_file=None,
+                            pre_com_file=None, post_com_file=None,
+                            force_clear=False):
+    """ Function to write batch scripts from command line.
+
+    Arguments
+    ---------
+    """
+    # Make sure all files exist.
+    if _check_files(command_file, config_file, pre_post_file,
+                    pre_com_file, post_com_file):
+        return 1
+
+    command_string = _read_file(command_file)
+    if pre_post_file is not None:
+        pre_string, post_string = _read_pre_post_file(pre_post_file)
+    else:
+        pre_string = _read_file(pre_com_file)
+        post_string = _read_file(post_com_file)
+
+    generate_batch_scripts(command_string, config_file, pre_string,
+                           post_string, force_clear)
+
+
+def generate_batch_scripts(command_string, config_file, pre_com_string="",
+                           post_com_string="", force_clear=False):
     """ Function to prepare for writing batch scripts.
 
     Arguments
@@ -108,16 +139,13 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
         Output directory for batch jobs.
 
     """
-    # Make sure all files exist.
-    if _check_files(command_file, config_file, run_pre_file, run_post_file):
-        return 1
 
     # Figure out the backend
-    config = cp.SafeConfigParser()
+    config = cp.ConfigParser()
     config.read(config_file)
 
     if config.has_section("CONNECTION"):
-        send_batch_ssh(command_file, config, force_clear)
+        send_batch_ssh(command_string, config, force_clear)
         return 0
 
     _replace_rel_abs_path(config, config_file)
@@ -131,22 +159,11 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
         pre_post_file = config.get("BATCH_OPTIONS", "pre_post_file")
 
     if pre_post_file is not None:
-        run_pre_compute, run_post_compute = _read_pre_post_file(pre_post_file)
-        run_pre_compute = "".join(run_pre_compute)
-        run_post_compute = "".join(run_post_compute)
-    else:
-        run_pre_compute = _read_script(run_pre_file)
-        run_post_compute = _read_script(run_post_file)
-
-        # Merge the lists back into single strings.
-        run_pre_compute = "\n".join(run_pre_compute)
-        run_post_compute = "\n".join(run_post_compute)
-
+        pre_com_string, post_com_string = _read_pre_post_file(pre_post_file)
     # Get all the commands either from file, or from lists:
-    script_lines = _read_script(command_file)
 
-    param["run_pre_compute"] = run_pre_compute
-    param["run_post_compute"] = run_post_compute
+    param["pre_com_string"] = pre_com_string
+    param["post_com_string"] = post_com_string
 
     # If no output directory is given, create batch.${back-end}/${job_name}/.
     output_dir = batch_dir(backend, param["job_name"])
@@ -160,4 +177,4 @@ def generate_batch_scripts(command_file, config_file, run_pre_file="/dev/null",
               format(cfg_file=config_file))
         return 1
 
-    batch.write_batch(script_lines, param, output_dir, force_clear)
+    batch.write_batch(command_string, param, output_dir, force_clear)

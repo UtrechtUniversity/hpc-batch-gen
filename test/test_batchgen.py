@@ -7,7 +7,7 @@ Module for testing the batchgen package as a whole.
 import os
 import configparser as cp
 
-from batchgen.base import generate_batch_scripts
+from batchgen.base import batch_script_from_files
 from batchgen.util import batch_dir
 
 
@@ -17,6 +17,8 @@ backend = slurm_lisa
 [BATCH_OPTIONS]
 clock_wall_time = 02:00:00
 num_cores = 16
+num_tasks_per_node = 30
+num_cores_simul = 15
 job_name = asr_sim
 base_dir = .
 tmp_dir = ${TMP_DIR}/asr
@@ -130,39 +132,25 @@ mkdir -p ${TMP_DIR}/asr
 cd .
 
 
-
-./sum.sh 0 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 1 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 10 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 12 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 234 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 5293 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 529384 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 1782641 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 128342 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 12984715 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 712948 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 452489 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-./sum.sh 1982641 ${TMP_DIR}/asr &> /dev/null &
-sleep 1
-wait
-wait
+parallel -j 15 << EOF_PARALLEL
+./sum.sh 0 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 1 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 10 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 12 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 234 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 5293 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 529384 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 1782641 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 128342 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 12984715 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 712948 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 452489 ${TMP_DIR}/asr &> /dev/null
+./sum.sh 1982641 ${TMP_DIR}/asr &> /dev/null
+EOF_PARALLEL
 
 
-mkdir -p batch.slurm_lisa/asr_sim
-cp ${TMP_DIR}/asr/sum*.dat batch.slurm_lisa/asr_sim
+mkdir -p sum_output
+cp ${TMP_DIR}/asr/sum*.dat sum_output
 
 
 if [ "True" == "True" ]; then
@@ -192,9 +180,9 @@ class TestBatchgen(object):
         with open(command_file, "w") as f:
             f.write(commands)
 
-        generate_batch_scripts(command_file, config_file, force_clear=False)
+        batch_script_from_files(command_file, config_file, force_clear=False)
 
-        config = cp.SafeConfigParser()
+        config = cp.ConfigParser()
         config.read(config_file)
 #         with open(config_file, "r") as f:
 #             print(f.read())

@@ -8,7 +8,7 @@ without going through the CLI.
 
 import argparse
 
-from batchgen.base import generate_batch_scripts
+from batchgen.base import batch_script_from_files
 from batchgen import __version__
 
 
@@ -36,17 +36,28 @@ def main():
     parser.add_argument(
         "-pre", "--pre-commands",
         type=str,
-        default="/dev/null",
-        dest="run_pre_file",
-        help="Commands to be executed for all nodes before command execution",
+        default=None,
+        dest="pre_com_file",
+        help="File with commands to be executed on all nodes before command"
+             "execution",
     )
 
     parser.add_argument(
         "-post", "--post-commands",
         type=str,
-        default="/dev/null",
-        dest="run_post_file",
-        help="Commands to be executed for all nodes after command execution",
+        default=None,
+        dest="post_com_file",
+        help="File with commands to be executed on all nodes after command"
+             "execution",
+    )
+
+    parser.add_argument(
+        "-pp", "--pre-post-commands",
+        type=str,
+        default=None,
+        dest="pre_post_file",
+        help="File with commands to be executed before and after command"
+             "executation",
     )
 
     parser.add_argument(
@@ -55,7 +66,7 @@ def main():
         action="store_const",
         const=True,
         default=False,
-        help="When batch directory exists, clear contents [USE WITH CARE]",
+        help="If batch directory exists, clear contents [USE WITH CARE]",
     )
 
     # Version
@@ -66,7 +77,7 @@ def main():
 
     args = parser.parse_args()
 
-    generate_batch_scripts(**vars(args))
+    batch_script_from_files(**vars(args))
 
 
 # If used from the command line.
