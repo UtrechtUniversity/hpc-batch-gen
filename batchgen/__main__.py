@@ -23,14 +23,14 @@ def main():
         "command_file",
         type=str,
         default=None,
-        help="Commands to be executed in parallel",
+        help="Commands to be executed in parallel.",
     )
 
     parser.add_argument(
         "config_file",
         type=str,
         default=None,
-        help="Configuration file (e.g. parallel.ini)",
+        help="Configuration file (e.g. parallel.ini).",
     )
 
     parser.add_argument(
@@ -39,7 +39,7 @@ def main():
         default=None,
         dest="pre_com_file",
         help="File with commands to be executed on all nodes before command"
-             "execution",
+             "execution.",
     )
 
     parser.add_argument(
@@ -48,7 +48,7 @@ def main():
         default=None,
         dest="post_com_file",
         help="File with commands to be executed on all nodes after command"
-             "execution",
+             "execution.",
     )
 
     parser.add_argument(
@@ -57,7 +57,7 @@ def main():
         default=None,
         dest="pre_post_file",
         help="File with commands to be executed before and after command"
-             "executation",
+             "executation.",
     )
 
     parser.add_argument(
@@ -66,7 +66,7 @@ def main():
         action="store_const",
         const=True,
         default=False,
-        help="If batch directory exists, clear contents [USE WITH CARE]",
+        help="If batch directory exists, clear contents.",
     )
 
     # Version

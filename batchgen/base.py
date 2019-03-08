@@ -157,9 +157,8 @@ def generate_batch_scripts(command_string, config_file, pre_com_string="",
 
     if config.has_option("BATCH_OPTIONS", "pre_post_file"):
         pre_post_file = config.get("BATCH_OPTIONS", "pre_post_file")
-
-    if pre_post_file is not None:
         pre_com_string, post_com_string = _read_pre_post_file(pre_post_file)
+
     # Get all the commands either from file, or from lists:
 
     param["pre_com_string"] = pre_com_string

@@ -5,7 +5,7 @@ Package for generating simple batch scripts in HPC environments. Currently avail
 
 ##### Software
 
-- GNU Parallel (for parallel backend)
+- GNU Parallel
 - Python 2.7+
 
 ### Installation:
@@ -23,27 +23,42 @@ pip install --user git+https://github.com/UtrechtUniversity/hpc-batch-gen.git
 ```
 
 ### Usage
+
+There are two ways to use the *batchgen* package. 
+
+##### [Command line interface (CLI)](doc/cli.md)
+
+The first is using the command line interface, which does need Python and GNU Parallel to be installed, but no programming in Python is required to use it. The basic command is the following (`bash batchgen -h` for a help file):
+
 ```bash
-python -m batchgen command_file config_file [-pre run_pre_file] [-post run_post_file]
+batchgen command_file config_file [-pre pre_file] [-post post_file] [-pp pre_post_file] [-f]
 ```
 
-or if you have your PATH variable setup:
+If this returns a "command not found" error, set your PATH to include the installation directory, or use the following:
 
 ```bash
-batchgen command_file config_file [-pre run_pre_file] [-post run_post_file]
+python -m batchgen command_file config_file [-pre pre_file] [-post post_file] [-f]
 ```
 
-##### input_script
-This is a script file that you want to run/parallelize. Every line should be a simple bash command (no backgrounding necessary).
+For a more detailed description see [here](doc/cli.md).
 
-##### config\_file
-Configuration file for the job to be run in standard INI format. Readable by humans and configparser (Python) alike. Templates are available in the samples/ folder. For a detailed description of how to construct configuration files, see [here](config.md)
+##### [Application Programming Interface (API)](doc/api.md)
 
-##### run\_pre\_file (optional)
-This is code that is run on each of the nodes before the commands. Possible uses are: copying files to temporary directories, copying source files. Overridden by pre\_post\_file option in the configuration file.
+The second option is to use the package directly within Python. There are two main ways to access the package. The first is similar to access provided through the CLI:
 
-##### run\_post\_file (optional)
-This code is run on each of the nodes after the commands. Possible uses are: copying results back or removing unused data. Overridden by pre\_post\_file option in the configuration file.
+```python
+batch_script_from_files(command_file, config_file, pre_post_file=None,
+					    pre_com_file=None, post_com_file=None, force_clear=False)
+```
+
+The second method bypasses the need to create as many files by supplying the package with strings (except the configuration file):
+
+```python
+generate_batch_scripts(command_string, config_file, pre_com_string="",
+                       post_com_string="", force_clear=False)
+```
+
+A more detailed description is available [here](doc/api.md)
 
 ### Example
 
