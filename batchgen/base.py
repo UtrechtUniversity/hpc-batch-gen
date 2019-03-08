@@ -99,9 +99,9 @@ def _read_pre_post_file(filename):
     return (pre_lines, post_lines)
 
 
-def batch_script_from_files(command_file, config_file, pre_post_file=None,
-                            pre_com_file=None, post_com_file=None,
-                            force_clear=False):
+def batch_from_files(command_file, config_file, pre_post_file=None,
+                     pre_com_file=None, post_com_file=None,
+                     force_clear=False):
     """ Function to write batch scripts from command line.
 
     Arguments
@@ -119,12 +119,12 @@ def batch_script_from_files(command_file, config_file, pre_post_file=None,
         pre_string = _read_file(pre_com_file)
         post_string = _read_file(post_com_file)
 
-    generate_batch_scripts(command_string, config_file, pre_string,
-                           post_string, force_clear)
+    batch_from_strings(command_string, config_file, pre_string,
+                       post_string, force_clear)
 
 
-def generate_batch_scripts(command_string, config_file, pre_com_string="",
-                           post_com_string="", force_clear=False):
+def batch_from_strings(command_string, config_file, pre_com_string="",
+                       post_com_string="", force_clear=False):
     """ Function to prepare for writing batch scripts.
 
     Arguments

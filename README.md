@@ -1,5 +1,7 @@
 # batchgen
-Package for generating simple batch scripts in HPC environments. Currently available: GNU Parallel, SLURM backend.
+Package for generating simple batch scripts in HPC environments. Currently available: GNU Parallel, SLURM backend. 
+
+In its current implementation, it will only **create** the batch files for submission, and **not** actually submit them. This might change in future versions.
 
 ### Requirements:
 
@@ -71,7 +73,7 @@ cd samples
 Then run the batch generator with the parallel backend (assuming the GNU parallel is installed):
 
 ```bash
-python asr_batch.py x.csv params.csv parallel.ini
+batchgen command_list.sh parallel.ini
 ```
 
 There should be a directory called "batch.parallel/my\_test/" in which a batch script called "batch.sh" is present.
@@ -81,6 +83,8 @@ Run the batch script:
 ```bash
 batch.parallel/my_test/batch.sh
 ```
+
+The output of this will be stored in the directory sum\_output. See the files sum.sh and command\_list.sh for what is computed.
 
 ### Contributors
 

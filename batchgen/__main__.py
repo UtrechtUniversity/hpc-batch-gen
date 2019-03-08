@@ -7,12 +7,13 @@ without going through the CLI.
 """
 
 import argparse
+import sys
 
-from batchgen.base import batch_script_from_files
+from batchgen import batch_from_files
 from batchgen import __version__
 
 
-def main():
+def parse_arguments(args):
     # Parse the arguments.
     parser = argparse.ArgumentParser(
         prog="batchgen",
@@ -75,9 +76,13 @@ def main():
         action="version",
         version="%(prog)s {version}".format(version=__version__))
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
+    return vars(args)
 
-    batch_script_from_files(**vars(args))
+
+def main():
+    args = parse_arguments(sys.argv[1:])
+    batch_from_files(**args)
 
 
 # If used from the command line.
