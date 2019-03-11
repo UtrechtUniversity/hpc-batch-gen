@@ -40,7 +40,7 @@ class SlurmLisa(HPC):
     """ Derived class from HPC. See hpc.py for method descriptions """
 
     def _create_batch_template(self):
-        t = Template("""
+        t = Template("""\
 #!/bin/bash
 #SBATCH -t ${clock_wall_time}
 #SBATCH --tasks-per-node=${num_cores}

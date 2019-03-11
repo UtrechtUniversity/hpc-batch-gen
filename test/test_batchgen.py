@@ -162,6 +162,9 @@ date
 
 
 def results_tester(tdir, config_file, batch_expected):
+    """ From a directory/configuration file and some expected result,
+        see if everything is as expected. """
+
     config = cp.ConfigParser()
     config.read(config_file)
 
@@ -183,6 +186,8 @@ def results_tester(tdir, config_file, batch_expected):
 
 def file_test(command_string, config, pre_post_input, batch_expected, tdir,
               pp_in_config, force_clear=False):
+    """ Using the CLI/file API batch creation, test if results match expectations.
+    """
     tdir = str(tdir)
     pre_post_file = "pp_sum.sh"
     config_file = os.path.join(tdir, "config.ini")
@@ -190,6 +195,7 @@ def file_test(command_string, config, pre_post_input, batch_expected, tdir,
     command_file = os.path.join(tdir, "command.sh")
     os.chdir(tdir)
 
+    # Add the pre_post_file to the options in the configuration file.
     if pp_in_config:
         config += "pre_post_file = " + pre_post_file + "\n"
         pre_post_file = None
@@ -209,6 +215,8 @@ def file_test(command_string, config, pre_post_input, batch_expected, tdir,
 
 def string_test(command_string, config, pre_post_input, batch_expected, tdir,
                 force_clear=False):
+    """ Using the string API batch creation, test if results match expectations.
+    """
     tdir = str(tdir)
     config_file = os.path.join(tdir, "config.ini")
     pp_file = os.path.join(tdir, "pp_sum.sh")
@@ -228,6 +236,8 @@ def string_test(command_string, config, pre_post_input, batch_expected, tdir,
 
 
 def test_parallel_file(tmpdir):
+    """ Test the parallel backend using different methods/settings.
+    """
     config = _config_parallel()
     batch_expected = _batch_parallel(tmpdir)
     pre_post_input = _pre_post_input()
@@ -241,6 +251,8 @@ def test_parallel_file(tmpdir):
 
 
 def test_slurm_local_file(tmpdir):
+    """ Test the SLURM/Lisa backend with different methods/settings.
+    """
     config = _config_slurm_local()
     batch_expected = _batch_slurm_local()
     pre_post_input = _pre_post_input()

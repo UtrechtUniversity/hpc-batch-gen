@@ -14,7 +14,7 @@ from batchgen.backend.hpc import HPC, double_substitute
 class Parallel(HPC):
     """ Derived class from HPC. See hpc.py for method descriptions """
     def _create_batch_template(self):
-        t = Template("""
+        t = Template("""\
 #!/bin/bash
 
 ${pre_com_string}
