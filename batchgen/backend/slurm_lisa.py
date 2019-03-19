@@ -29,8 +29,10 @@ def _get_body(script_lines, num_cores_simul):
     # Stage the commands every 1 second.
     body = "parallel -j {num_cores_simul} << EOF_PARALLEL\n"
     body = body.format(num_cores_simul=num_cores_simul)
-    for line in script_lines:
+    for i, line in enumerate(script_lines):
         new_line = line.rstrip() + " &> /dev/null\n"
+        if i < num_cores_simul:
+            new_line = "sleep {i}; ".format(i=i) + new_line
         body = body+new_line
     body += "EOF_PARALLEL\n"
     return body

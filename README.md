@@ -28,7 +28,7 @@ pip install --user git+https://github.com/UtrechtUniversity/hpc-batch-gen.git
 
 There are two ways to use the *batchgen* package. 
 
-##### [Command line interface (CLI)](doc/cli.md)
+##### [Command line interface (CLI)](docs/cli.md)
 
 The first is using the command line interface, which does need Python and GNU Parallel to be installed, but no programming in Python is required to use it. The basic command is the following (`bash batchgen -h` for a help file):
 
@@ -42,9 +42,9 @@ If this returns a "command not found" error, set your PATH to include the instal
 python -m batchgen command_file config_file [-pre pre_file] [-post post_file] [-f]
 ```
 
-For a more detailed description see [here](doc/cli.md).
+For a more detailed description see [here](docs/cli.md).
 
-##### [Application Programming Interface (API)](doc/api.md)
+##### [Application Programming Interface (API)](docs/api.md)
 
 The second option is to use the package directly within Python. There are two main ways to access the package. The first is similar to access provided through the CLI:
 
@@ -60,7 +60,7 @@ batch_from_strings(command_string, config_file, pre_com_string="",
                        post_com_string="", force_clear=False)
 ```
 
-A more detailed description is available [here](doc/api.md)
+A more detailed description is available [here](docs/api.md)
 
 ### Example
 

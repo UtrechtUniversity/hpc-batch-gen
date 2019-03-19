@@ -60,7 +60,6 @@ setup(
     entry_points={
         'console_scripts': [
             'batchgen=batchgen.__main__:main'],
-
     },
 
     project_urls={

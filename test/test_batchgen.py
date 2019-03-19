@@ -90,7 +90,6 @@ def _commands():
 
 def _batch_parallel(tdir):
     batch_content = """\
-
 #!/bin/bash
 
 
@@ -115,7 +114,6 @@ cp tmp_sum/sum*.dat sum_output
 
 def _batch_slurm_local():
     batch_content = """\
-
 #!/bin/bash
 #SBATCH -t 02:00:00
 #SBATCH --tasks-per-node=13
