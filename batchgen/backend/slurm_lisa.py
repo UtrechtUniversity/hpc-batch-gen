@@ -11,7 +11,7 @@ from batchgen.backend.hpc import HPC, double_substitute
 from batchgen.util import mult_time
 
 
-def _get_body(script_lines, num_cores_simul):
+def _get_body(script_lines, num_cores_simul, silence=False):
     """Function to create the body of the script files, staging their start.
 
     Arguments
@@ -29,8 +29,12 @@ def _get_body(script_lines, num_cores_simul):
     # Stage the commands every 1 second.
     body = "parallel -j {num_cores_simul} << EOF_PARALLEL\n"
     body = body.format(num_cores_simul=num_cores_simul)
+    if silence:
+        redirect = "&> /dev/null"
+    else:
+        redirect = ""
     for i, line in enumerate(script_lines):
-        new_line = line.rstrip() + " &> /dev/null\n"
+        new_line = line.rstrip() + redirect + "\n"
         if i < num_cores_simul:
             new_line = "sleep {i}; ".format(i=i) + new_line
         body = body+new_line
