@@ -51,6 +51,8 @@ class SlurmLisa(HPC):
 #SBATCH -t ${clock_wall_time}
 #SBATCH --tasks-per-node=${num_cores}
 #SBATCH -J ${job_name}
+#SBATCH --output=${batch_dir}/${job_name}_${batch_id}.out
+#SBATCH --error=${batch_dir}/${job_name}_${batch_id}.err
 
 ${pre_com_string}
 ${main_body}
@@ -106,7 +108,7 @@ date
         for batch_id, i in enumerate(range(0, num_tasks, tpn)):
             # Output file
             batch_file = os.path.join(batch_dir,
-                                      "batch" + str(batch_id) + ".sh")
+                                      "batch_" + str(batch_id) + ".sh")
             par["main_body"] = _get_body(script_lines[i:i+tpn], ncs)
             par["batch_id"] = batch_id
             if len(script_lines[i:i+tpn]) < num_cores:
@@ -118,7 +120,7 @@ date
                 f.write(batch_script)
 
         # Execute the following to submit the batch.
-        my_exec = "for FILE in {batch_dir}/batch*.sh; do sbatch $FILE; done"
+        my_exec = "for FILE in {batch_dir}/batch_*.sh; do sbatch $FILE; done"
 
         return my_exec.format(batch_dir=batch_dir)
 

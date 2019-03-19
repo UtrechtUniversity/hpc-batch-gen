@@ -80,7 +80,7 @@ def batch_dir(backend, job_name, remote=False):
         new_dir = os.path.join("batch."+backend+".remote", job_name)
     else:
         new_dir = os.path.join("batch."+backend, job_name)
-    return new_dir
+    return os.path.abspath(new_dir)
 
 
 def mult_time(clock_wall_time, mult):
