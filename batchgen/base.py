@@ -142,6 +142,7 @@ def batch_from_strings(command_string, config_file, pre_com_string="",
 
     # Figure out the backend
     config = cp.ConfigParser()
+    config.optionxform = str
     config.read(config_file)
 
     if config.has_section("CONNECTION"):

@@ -26,7 +26,7 @@ ${post_com_string}
     def _parse_params(self, param):
         # If num_cores is not supplied let parallel auto-detect.
         if "num_cores" in param:
-            param["num_cores_w_arg"] = "-j " + str(param["num_cores"])
+            param["num_cores_w_arg"] = "-j " + str(param["num_cores"]) + " "
         else:
             param["num_cores_w_arg"] = ""
             param["num_cores"] = cpu_count()
