@@ -19,7 +19,7 @@ from batchgen.ssh import send_batch_ssh
 from batchgen.util import _read_file, _check_files, batch_dir
 
 
-def _params(config=None):
+def _params(config=None, extra_config={}):
     """Function to set defaults for the batch jobs.
 
     Returns
@@ -35,6 +35,7 @@ def _params(config=None):
 
     # If a file is supplied, read the configuration.
     if config is not None:
+        parameters.update(extra_config)
         parameters.update(dict(config.items("BATCH_OPTIONS")))
         parameters.update(dict(config.items("BACKEND")))
 
@@ -124,7 +125,7 @@ def batch_from_files(command_file, config_file, pre_post_file=None,
 
 
 def batch_from_strings(command_string, config_file, pre_com_string="",
-                       post_com_string="", force_clear=False):
+                       post_com_string="", force_clear=False, extra_config={}):
     """ Function to prepare for writing batch scripts.
 
     Arguments
@@ -154,7 +155,7 @@ def batch_from_strings(command_string, config_file, pre_com_string="",
     backend = config.get("BACKEND", "backend")
 
     # Set the parameters from the config file.
-    param = _params(config)
+    param = _params(config, extra_config)
 
     if config.has_option("BATCH_OPTIONS", "pre_post_file"):
         pre_post_file = config.get("BATCH_OPTIONS", "pre_post_file")

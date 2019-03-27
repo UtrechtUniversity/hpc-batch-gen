@@ -112,12 +112,14 @@ cp tmp_sum/sum*.dat sum_output
     return batch_content
 
 
-def _batch_slurm_local():
+def _batch_slurm_local(tdir):
     batch_content = """\
 #!/bin/bash
 #SBATCH -t 02:00:00
 #SBATCH --tasks-per-node=13
 #SBATCH -J asr_sim
+#SBATCH --output="""+str(tdir)+"""/batch.slurm_lisa/asr_sim/asr_sim_0.out
+#SBATCH --error="""+str(tdir)+"""/batch.slurm_lisa/asr_sim/asr_sim_0.err
 
 
 if [ "slurm_lisa" == "slurm_lisa" ]; then
@@ -130,19 +132,19 @@ cd .
 
 
 parallel -j 15 << EOF_PARALLEL
-./sum.sh 0 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 1 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 10 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 12 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 234 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 5293 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 529384 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 1782641 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 128342 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 12984715 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 712948 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 452489 ${TMP_DIR}/asr &> /dev/null
-./sum.sh 1982641 ${TMP_DIR}/asr &> /dev/null
+sleep 0; ./sum.sh 0 ${TMP_DIR}/asr
+sleep 1; ./sum.sh 1 ${TMP_DIR}/asr
+sleep 2; ./sum.sh 10 ${TMP_DIR}/asr
+sleep 3; ./sum.sh 12 ${TMP_DIR}/asr
+sleep 4; ./sum.sh 234 ${TMP_DIR}/asr
+sleep 5; ./sum.sh 5293 ${TMP_DIR}/asr
+sleep 6; ./sum.sh 529384 ${TMP_DIR}/asr
+sleep 7; ./sum.sh 1782641 ${TMP_DIR}/asr
+sleep 8; ./sum.sh 128342 ${TMP_DIR}/asr
+sleep 9; ./sum.sh 12984715 ${TMP_DIR}/asr
+sleep 10; ./sum.sh 712948 ${TMP_DIR}/asr
+sleep 11; ./sum.sh 452489 ${TMP_DIR}/asr
+sleep 12; ./sum.sh 1982641 ${TMP_DIR}/asr
 EOF_PARALLEL
 
 
@@ -172,7 +174,7 @@ def results_tester(tdir, config_file, batch_expected):
     abs_batch_dir = batch_dir(backend=backend, job_name=job_name,
                               remote=remote)
     if backend == "slurm_lisa":
-        batch_file = os.path.join(tdir, abs_batch_dir, "batch0.sh")
+        batch_file = os.path.join(tdir, abs_batch_dir, "batch_0.sh")
     else:
         batch_file = os.path.join(tdir, abs_batch_dir, "batch.sh")
 
@@ -252,7 +254,7 @@ def test_slurm_local_file(tmpdir):
     """ Test the SLURM/Lisa backend with different methods/settings.
     """
     config = _config_slurm_local()
-    batch_expected = _batch_slurm_local()
+    batch_expected = _batch_slurm_local(tmpdir)
     pre_post_input = _pre_post_input()
     command_string = _commands()
     file_test(command_string, config, pre_post_input, batch_expected, tmpdir,
