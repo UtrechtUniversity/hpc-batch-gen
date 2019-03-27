@@ -12,10 +12,20 @@ from batchgen.util import _split_commands
 
 
 def double_substitute(template, param):
-    first_batch_str = template.safe_substitute(param)
-    recursive_template = Template(first_batch_str)
-    final_batch_str = recursive_template.safe_substitute(param)
-    return final_batch_str
+    # Don't go into infinite recursion.
+    n_max_iter = 10
+    batch_str = template.safe_substitute(param)
+
+    i_iter = 0
+    while i_iter < n_max_iter:
+        recursive_template = Template(batch_str)
+        new_batch_str = recursive_template.safe_substitute(param)
+        if batch_str == new_batch_str:
+            return batch_str
+        batch_str = new_batch_str
+        i_iter += 1
+    raise RuntimeError("Error in templating: recursive loop detected.")
+    return batch_str
 
 
 def make_check_clean_directory(output_dir, force_clear=False):
