@@ -84,6 +84,7 @@ def _commands():
 ./sum.sh 712948 ${tmp_dir}
 ./sum.sh 452489 ${tmp_dir}
 ./sum.sh 1982641 ${tmp_dir}
+./sum.sh 1982641 ${tmp_dir}
 """
     return command
 
@@ -116,7 +117,7 @@ def _batch_slurm_local(tdir):
     batch_content = """\
 #!/bin/bash
 #SBATCH -t 02:00:00
-#SBATCH --tasks-per-node=13
+#SBATCH --tasks-per-node=16
 #SBATCH -J asr_sim
 #SBATCH --output="""+str(tdir)+"""/batch.slurm_lisa/asr_sim/asr_sim_0.out
 #SBATCH --error="""+str(tdir)+"""/batch.slurm_lisa/asr_sim/asr_sim_0.err
@@ -145,6 +146,7 @@ sleep 9; ./sum.sh 12984715 ${TMP_DIR}/asr
 sleep 10; ./sum.sh 712948 ${TMP_DIR}/asr
 sleep 11; ./sum.sh 452489 ${TMP_DIR}/asr
 sleep 12; ./sum.sh 1982641 ${TMP_DIR}/asr
+sleep 13; ./sum.sh 1982641 ${TMP_DIR}/asr
 EOF_PARALLEL
 
 

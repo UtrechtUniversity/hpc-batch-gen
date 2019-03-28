@@ -82,7 +82,7 @@ date
 
         tasks_per_node = param["num_tasks_per_node"]
         num_tasks = len(param["script_lines"])
-        max_num_cores = min(num_cores, num_tasks)
+        max_num_cores = num_cores
         num_nodes = (num_tasks-1) // tasks_per_node + 1
         cost_factor = 16*num_nodes
 
@@ -111,8 +111,12 @@ date
                                       "batch_" + str(batch_id) + ".sh")
             par["main_body"] = _get_body(script_lines[i:i+tpn], ncs)
             par["batch_id"] = batch_id
-            if len(script_lines[i:i+tpn]) < num_cores:
-                par["num_cores"] = len(script_lines[i:i+tpn])
+            if len(script_lines[i:i+tpn]) < tpn:
+                num_task_remain = len(script_lines[i:i+tpn])
+                cores_per_task = (num_cores-1)//ncs+1
+                print(num_task_remain, cores_per_task, num_cores, ncs)
+                par["num_cores"] = min(num_cores,
+                                       num_task_remain*cores_per_task)
 
             # Allow for one more substitution to facilitate user substitution.
             batch_script = double_substitute(self._batch_template, par)
