@@ -114,7 +114,6 @@ date
             if len(script_lines[i:i+tpn]) < tpn:
                 num_task_remain = len(script_lines[i:i+tpn])
                 cores_per_task = (num_cores-1)//ncs+1
-                print(num_task_remain, cores_per_task, num_cores, ncs)
                 par["num_cores"] = min(num_cores,
                                        num_task_remain*cores_per_task)
 
