@@ -39,7 +39,7 @@ def parse_arguments(args):
         type=str,
         default=None,
         dest="pre_com_file",
-        help="File with commands to be executed on all nodes before command"
+        help="File with commands to be executed on all nodes before command "
              "execution.",
     )
 
@@ -48,7 +48,7 @@ def parse_arguments(args):
         type=str,
         default=None,
         dest="post_com_file",
-        help="File with commands to be executed on all nodes after command"
+        help="File with commands to be executed on all nodes after command "
              "execution.",
     )
 
@@ -57,8 +57,8 @@ def parse_arguments(args):
         type=str,
         default=None,
         dest="pre_post_file",
-        help="File with commands to be executed before and after command"
-             "executation.",
+        help="File with commands to be executed before and after command "
+             "execution.",
     )
 
     parser.add_argument(

@@ -21,7 +21,7 @@ def _read_file(script):
         List of strings where each element is one command.
     """
     if script is None:
-        return None
+        return ""
     with open(script, "r") as f:
         script_string = f.read()
     return script_string
